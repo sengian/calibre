@@ -26,7 +26,7 @@ The list of names that convert to identifiers when in get and set.
 '''
 
 TOP_LEVEL_IDENTIFIERS = frozenset([
-    'isbn',
+    'isbn', 'doi',
 ])
 
 PUBLICATION_METADATA_FIELDS = frozenset([
