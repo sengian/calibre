@@ -13,7 +13,7 @@ from threading import Event
 
 from calibre.customize.ui import all_metadata_plugins
 from calibre import prints, sanitize_file_name2
-from calibre.ebooks.metadata import check_isbn
+from calibre.ebooks.metadata import check_isbn, check_doi
 from calibre.ebooks.metadata.sources.base import create_log, get_cached_cover_urls
 from calibre.ebooks.metadata.sources.prefs import msprefs
 
@@ -25,6 +25,18 @@ def isbn_test(isbn):
         if misbn and misbn == isbn_:
             return True
         prints('ISBN test failed. Expected: \'%s\' found \'%s\''%(isbn_, misbn))
+        return False
+
+    return test
+
+def doi_test(doi):
+    doi_ = check_doi(doi)
+
+    def test(mi):
+        mdoi = check_doi(mi.doi)
+        if mdoi and mdoi == doi_:
+            return True
+        prints('DOI test failed. Expected: \'%s\' found \'%s\''%(doi_, mdoi))
         return False
 
     return test
@@ -128,7 +140,7 @@ def test_identify(tests):  # {{{
     :param tests: List of 2-tuples. Each two tuple is of the form (args,
                   test_funcs). args is a dict of keyword arguments to pass to
                   the identify method. test_funcs are callables that accept a
-                  Metadata object and return True iff the object passes the
+                  Metadata object and return True if the object passes the
                   test.
     '''
     from calibre.ebooks.metadata.sources.identify import identify
@@ -196,7 +208,7 @@ def test_identify_plugin(name, tests, modify_plugin=lambda plugin:None,
     :param tests: List of 2-tuples. Each two tuple is of the form (args,
                   test_funcs). args is a dict of keyword arguments to pass to
                   the identify method. test_funcs are callables that accept a
-                  Metadata object and return True iff the object passes the
+                  Metadata object and return True if the object passes the
                   test.
     '''
     plugin = None
