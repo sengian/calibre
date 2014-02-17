@@ -193,7 +193,7 @@ class Source(Plugin):
     supports_gzip_transfer_encoding = False
 
     #: Cached cover URLs can sometimes be unreliable (i.e. the download could
-    #: fail or the returned image could be bogus. If that is often the case
+    #: fail or the returned image could be bogus). If that is often the case
     #: with this source set to False
     cached_cover_url_is_reliable = True
 
