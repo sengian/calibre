@@ -4,15 +4,18 @@ from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
 __license__   = 'GPL v3'
-__copyright__ = '2014, sengian <sengian1 at gmail.com>''
+__copyright__ = '2014, sengian <sengian1 at gmail.com>'
 __docformat__ = 'restructuredtext en'
 
+from urllib import quote as url_quote
+from lxml import etree
 
-
+from calibre.ebooks.chardet import xml_to_unicode
 from calibre.ebooks.metadata import check_doi
 from calibre.ebooks.metadata.sources.base import Source
-from calibre.utils.icu import lower
 from calibre.ebooks.metadata.book.base import Metadata
+from calibre.utils.icu import lower
+from calibre.utils.cleantext import clean_ascii_chars
 
 
 class DOI(Source):
@@ -24,16 +27,19 @@ class DOI(Source):
     capabilities = frozenset(['identify'])
     touched_fields = frozenset(['title', 'authors', 'identifier:doi'
         'identifier:url', 'pubdate', 'languages', 'publisher'])
-    # supports_gzip_transfer_encoding = True To be checked
+    supports_gzip_transfer_encoding = True
     # Shortcut, since we have no cached cover URLS
     cached_cover_url_is_reliable = False
+
+    # An ordered list of the preferred content type for metadata retrieval
+    ordered_content_types = ['application/vnd.crossref.unixref+xml',
+                    'application/vnd.datacite.datacite+xml', 'application/rdf+xml']
 
 
     def __init__(self, *args, **kwargs):
         Source.__init__(self, *args, **kwargs)
 
-    def create_query(self, title=None, authors=None, identifiers={}): # {{{
-        from urllib import quote
+    def create_query(self, identifiers={}): # {{{
         base_url = 'http://dx.doi.org/'
         doi = check_doi(identifiers.get('doi', None))
         if doi is not None:
@@ -43,7 +49,7 @@ class DOI(Source):
 
         if isinstance(q, unicode):
             q = q.encode('utf-8')
-        return base_url + quote(q)
+        return base_url + url_quote(q)
     # }}}
 
     def identify(self, log, result_queue, abort, title=None, authors=None, # {{{
@@ -55,24 +61,20 @@ class DOI(Source):
             log.error(err)
             return err
 
-        results = []
         try:
-            results = self.make_query(query, abort, identifiers=identifiers, timeout=timeout)
+            xml_tree = self.make_query(query, log, timeout=timeout)
         except:
             err = 'Failed to make query to doi.org, aborting.'
             log.exception(err)
             return err
 
-        if not results and identifiers.get('doi', False) and not abort.is_set():
-            return self.identify(log, result_queue, abort, title=title,
-                    authors=authors, timeout=timeout)
-
-        for result in results:
-            self.clean_downloaded_metadata(result)
+        if xml_tree is not None and not abort.is_set():
+            # Parse the result and put it in the queue
+            # log.error(etree.tostring(xml_tree, pretty_print=True, with_tail=True, method='xml'))
+            result = self.parse_feed(xml_tree)
             result_queue.put(result)
 
-    def parse_feed(self, feed, seen, orig_title, orig_authors, identifiers):
-        from lxml import etree
+    def parse_feed(self, feed):
 
         def tostring(x):
             if x is None:
@@ -144,34 +146,31 @@ class DOI(Source):
             results.append(mi)
         return total_results, shown_results, results
 
-    def make_query(self, q, abort, title=None, authors=None, identifiers={},
-            max_pages=10, timeout=30):
-        from lxml import etree
-        from calibre.ebooks.chardet import xml_to_unicode
-        from calibre.utils.cleantext import clean_ascii_chars
+    def make_query(self, q, log, timeout=30):
 
-        page_num = 1
         parser = etree.XMLParser(recover=True, no_network=True)
         br = self.browser
+        # Add extra headers to specify what metadata format we want
+        br.addheaders.append(('accept', ', '.join(self.ordered_content_types)))
+        raw = br.open_novisit(q, timeout=timeout)
 
-        seen = set()
-
-        candidates = []
-        total_found = 0
-        while page_num <= max_pages and not abort.is_set():
-            url = q.replace('&page_number=1&', '&page_number=%d&'%page_num)
-            page_num += 1
-            raw = br.open_novisit(url, timeout=timeout).read()
-            feed = etree.fromstring(xml_to_unicode(clean_ascii_chars(raw),
+        # Check if all was ok and log the corresponding errors
+        status = raw.info().dict['status'].split(' ')[0]
+        if status == '200':
+            # Parse the request & return a tree if all is Ok
+            return etree.fromstring(xml_to_unicode(clean_ascii_chars(raw.read()),
                 strip_encoding_pats=True)[0], parser=parser)
-            total, found, results = self.parse_feed(
-                    feed, seen, title, authors, identifiers)
-            total_found += found
-            candidates += results
-            if total_found >= total or len(candidates) > 9:
-                break
+        elif status == '204':
+            err = 'No metadata available for this DOI'
+            log.warning(err)
+        elif status == '404':
+            err = 'This DOI doesn\'t exist'
+            log.error(err)
+        elif status == '406':
+            err = 'None of the requested content types are available from this server'
+            log.error(err)
 
-        return candidates
+        return None
     # }}}
 
 if __name__ == '__main__':
@@ -181,12 +180,12 @@ if __name__ == '__main__':
             title_test, authors_test)
     test_identify_plugin(DOI.name,
         [
-            (
-                {'identifiers':{'doi':'10.1016/j.electacta.2012.03.132'}},
-                [title_test('Hydrogen peroxide as a sustainable energy carrier: '
-                    'Electrocatalytic production of hydrogen peroxide and the fuel cell', exact=True),
-                    authors_test(['Shunichi Fukuzumi'])]
-            ),
+            # (
+                # {'identifiers':{'doi':'10.1016/j.electacta.2012.03.132'}},
+                # [title_test('Hydrogen peroxide as a sustainable energy carrier: '
+                    # 'Electrocatalytic production of hydrogen peroxide and the fuel cell', exact=True),
+                    # authors_test(['Shunichi Fukuzumi'])]
+            # ),
 
             (
                 {'identifiers':{'doi':'10.1039/c3gc40811f'}},
