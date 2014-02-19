@@ -192,6 +192,11 @@ class Source(Plugin):
     #: correctly first
     supports_gzip_transfer_encoding = False
 
+    #: List of extra headers to add to the browser
+    #: This should be a list of tupples like:
+    #: [('accept', 'application/rdf+xml')]
+    add_browser_extra_headers = []
+
     #: Cached cover URLs can sometimes be unreliable (i.e. the download could
     #: fail or the returned image could be bogus). If that is often the case
     #: with this source set to False
@@ -267,6 +272,8 @@ class Source(Plugin):
             self._browser = browser(user_agent=self.user_agent)
             if self.supports_gzip_transfer_encoding:
                 self._browser.set_handle_gzip(True)
+            if self.add_browser_extra_headers:
+                self._browser.add_headers(self.add_browser_extra_headers)
         return self._browser.clone_browser()
 
     # }}}
