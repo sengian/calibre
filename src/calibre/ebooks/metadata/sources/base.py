@@ -273,7 +273,7 @@ class Source(Plugin):
             if self.supports_gzip_transfer_encoding:
                 self._browser.set_handle_gzip(True)
             if self.add_browser_extra_headers:
-                self._browser.add_headers(self.add_browser_extra_headers)
+                self._browser.addheaders.extend(self.add_browser_extra_headers)
         return self._browser.clone_browser()
 
     # }}}

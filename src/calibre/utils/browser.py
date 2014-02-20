@@ -87,9 +87,6 @@ class Browser(B):
         B.add_proxy_password(self, *args, **kwargs)
         self._clone_actions['add_proxy_password'] = ('add_proxy_password', args, kwargs)
 
-    def add_headers(self, headers):
-        self.addheaders.extend(headers)
-
     def clone_browser(self):
         clone = Browser()
         clone.addheaders = copy.deepcopy(self.addheaders)
