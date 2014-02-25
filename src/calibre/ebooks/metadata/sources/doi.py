@@ -226,8 +226,11 @@ if __name__ == '__main__':
     # calibre-debug -e "E:\Developpement\calibre\src\calibre\ebooks\metadata\sources\doi.py"
     from calibre.ebooks.metadata.sources.test import (test_identify_plugin,
             title_test, authors_test)
+    # Tests of different contents for every DOI provider coming
+    # from: http://www.doi.org/demos.html
     test_identify_plugin(DOI.name,
         [
+            # Extra:
             # (
                 # {'identifiers':{'doi':'10.1016/j.electacta.2012.03.132'}},
                 # [title_test('Hydrogen peroxide as a sustainable energy carrier: '
@@ -235,14 +238,65 @@ if __name__ == '__main__':
                     # authors_test(['Shunichi Fukuzumi'])]
             # ),
 
-            # (   #Crossref DOI
-                # {'identifiers':{'doi':'10.1039/c3gc40811f'}},
-                # [title_test('Direct synthesis', exact=False)]
+            # Crossref:
+            # - Journal article
+            # (
+                # {'identifiers':{'doi':'10.10.1038/nphys1170'}},
+                # [title_test('Quantum tomography: Measured measurement', exact=True),
+                # authors_test(['Markus Aspelmeyer'])]
             # ),
 
-             (   #Datacite DOI 10.5438/0009
-                {'identifiers':{'doi':'10.5438/0009kmlktkx'}},
-                [title_test('DataCite Metadata Schema 3.0 XML Schema', exact=False)]
+            # - Book Chapter
+            # (
+                # {'identifiers':{'doi':'10.1002/0470841559.ch1'}},
+                # [title_test('Internetworking LANs and WANs', exact=True),
+                # authors_test(['Held, Gilbert'])]
+            # ),
+
+            # Datacite:
+            # -Sets & Subsets
+            (
+                {'identifiers':{'doi':'10.1594/PANGAEA.726855'}},
+                [title_test('Chemical and mineral compositions of sediments from ODP Site 127-797', exact=True),
+                authors_test(['Irino, T'])]
             ),
+
+            # Institute of Scientific and Technical Information of China (ISTIC):
+            # - Journal article
+            # (
+                # {'identifiers':{'doi':'10.3866/PKU.WHXB201112303'}},
+                # [title_test('Correlation between Bond-Length Change and Vibrational Frequency', exact=False),
+                # authors_test(['ZHANG Yu'])]
+            # ),
+
+            # - Dissertation:
+            # (
+                # {'identifiers':{'doi':'10.1002/0470841559.ch1'}},
+                # [title_test(u'生物质材料热解失重动力学及其分析方法研究', exact=False),
+                # authors_test([u'刘乃安'])]
+            # ),
+
+            # Japan Link Center (JaLC):
+            # - Journal article
+            # (
+                # {'identifiers':{'doi':'10.11467/isss2003.7.1_11'}},
+                # [title_test(u'大学におけるWebメールとターミナルサービスの研究', exact=False),
+                # authors_test([u'竹本 賢太郎'])]
+            # ),
+
+            # Multilingual European DOI Registration Agency mEDRA:
+            # - Journal article
+            # (
+                # {'identifiers':{'doi':'10.1430/8105'}},
+                # [title_test('L'industria dopo l'euro', exact=True),
+                # authors_test(['Prodi, Romano'])]
+            # ),
+
+            # - Monograph
+            # (
+                # {'identifiers':{'doi':'10.1430/8105'}},
+                # [title_test('The use of DOI system in eContent value chain', exact=False),
+                # authors_test(['Attanasio, Piero'])]
+            # ),
     ])
 
