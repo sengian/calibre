@@ -65,4 +65,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         except:
             import traceback
             traceback.print_exc()
+        finally:
+            # Disabled as it causes crashes
+            pass  # QApplication.processEvents()  # Try to keep the editor responsive to user input
 

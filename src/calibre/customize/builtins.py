@@ -1441,15 +1441,6 @@ class StoreEbooksGratuitsStore(StoreBase):
 #     formats = ['EPUB', 'PDF']
 #     affiliate = True
 
-class StoreEHarlequinStore(StoreBase):
-    name = 'eHarlequin'
-    description = u'A global leader in series romance and one of the world\'s leading publishers of books for women. Offers women a broad range of reading from romance to bestseller fiction, from young adult novels to erotic literature, from nonfiction to fantasy, from African-American novels to inspirational romance, and more.'  # noqa
-    actual_plugin = 'calibre.gui2.store.stores.eharlequin_plugin:EHarlequinStore'
-
-    headquarters = 'CA'
-    formats = ['EPUB', 'PDF']
-    affiliate = True
-
 class StoreEKnigiStore(StoreBase):
     name = u'еКниги'
     author = 'Alex Stanev'
@@ -1476,16 +1467,6 @@ class StoreFeedbooksStore(StoreBase):
 
     headquarters = 'FR'
     formats = ['EPUB', 'MOBI', 'PDF']
-
-class StoreFoylesUKStore(StoreBase):
-    name = 'Foyles UK'
-    author = 'Charles Haley'
-    description = u'Foyles of London\'s ebook store. Provides extensive range covering all subjects.'
-    actual_plugin = 'calibre.gui2.store.stores.foyles_uk_plugin:FoylesUKStore'
-
-    headquarters = 'UK'
-    formats = ['EPUB', 'PDF']
-    affiliate = True
 
 class StoreGoogleBooksStore(StoreBase):
     name = 'Google Books'
@@ -1746,11 +1727,9 @@ plugins += [
     StoreEbookpointStore,
     StoreEbookscomStore,
     StoreEbooksGratuitsStore,
-    StoreEHarlequinStore,
     StoreEKnigiStore,
     StoreEmpikStore,
     StoreFeedbooksStore,
-    StoreFoylesUKStore,
     StoreGoogleBooksStore,
     StoreGutenbergStore,
     StoreKoboStore,

@@ -16,7 +16,7 @@ from PyQt4.Qt import (
     QVBoxLayout, QStackedWidget, QTabWidget, QImage, QPixmap, pyqtSignal,
     QMenu, QHBoxLayout, QTimer, QUrl)
 
-from calibre.constants import __appname__, get_version
+from calibre.constants import __appname__, get_version, isosx
 from calibre.gui2 import elided_text, open_url
 from calibre.gui2.keyboard import Manager as KeyboardManager
 from calibre.gui2.main_window import MainWindow
@@ -188,13 +188,13 @@ class CursorPositionWidget(QWidget):  # {{{
             self.la.setText('')
         else:
             try:
-                name = unicodedata.name(character, None) if character else None
+                name = unicodedata.name(character, None) if character and tprefs['editor_show_char_under_cursor'] else None
             except Exception:
                 name = None
             text = _('Line: {0} : {1}').format(line, col)
             if not name:
                 name = {'\t':'TAB'}.get(character, None)
-            if name:
+            if name and tprefs['editor_show_char_under_cursor']:
                 text = name + ' : ' + text
             self.la.setText(text)
 # }}}
@@ -287,9 +287,11 @@ class Main(MainWindow):
                                    'new-file', (), _('Create a new file in the current book'))
         self.action_import_files = reg(None, _('&Import files into book'), self.boss.add_files, 'new-files', (), _('Import files into book'))
         self.action_open_book = reg('document_open.png', _('Open &book'), self.boss.open_book, 'open-book', 'Ctrl+O', _('Open a new book'))
-        self.action_global_undo = reg('back.png', _('&Revert to before'), self.boss.do_global_undo, 'global-undo', 'Ctrl+Left',
+        # Qt does not generate shortcut overrides for cmd+arrow on os x which
+        # means these shortcuts interfere with editing
+        self.action_global_undo = reg('back.png', _('&Revert to before'), self.boss.do_global_undo, 'global-undo', () if isosx else 'Ctrl+Left',
                                       _('Revert book to before the last action (Undo)'))
-        self.action_global_redo = reg('forward.png', _('&Revert to after'), self.boss.do_global_redo, 'global-redo', 'Ctrl+Right',
+        self.action_global_redo = reg('forward.png', _('&Revert to after'), self.boss.do_global_redo, 'global-redo', () if isosx else 'Ctrl+Right',
                                       _('Revert book state to after the next action (Redo)'))
         self.action_save = reg('save.png', _('&Save'), self.boss.save_book, 'save-book', 'Ctrl+S', _('Save book'))
         self.action_save.setEnabled(False)
@@ -328,9 +330,9 @@ class Main(MainWindow):
                                            _('Fix HTML in the current file'))
         self.action_fix_html_all = reg('html-fix.png', _('&Fix HTML - all files'), partial(self.boss.fix_html, False), 'fix-html-all', (),
                                        _('Fix HTML in all files'))
-        self.action_pretty_current = reg('format-justify-fill.png', _('&Beautify current file'), partial(self.boss.pretty_print, True), 'pretty-current', (),
+        self.action_pretty_current = reg('beautify.png', _('&Beautify current file'), partial(self.boss.pretty_print, True), 'pretty-current', (),
                                            _('Beautify current file'))
-        self.action_pretty_all = reg('format-justify-fill.png', _('&Beautify all files'), partial(self.boss.pretty_print, False), 'pretty-all', (),
+        self.action_pretty_all = reg('beautify.png', _('&Beautify all files'), partial(self.boss.pretty_print, False), 'pretty-all', (),
                                        _('Beautify all files'))
         self.action_insert_char = reg('character-set.png', _('&Insert special character'), self.boss.insert_character, 'insert-character', (),
                                       _('Insert special character'))

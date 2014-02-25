@@ -403,9 +403,9 @@ class Container(object):  # {{{
             data, strip_encoding_pats=True, assume_utf8=True, resolve_entities=True)
         return etree.fromstring(data, parser=RECOVER_PARSER)
 
-    def parse_xhtml(self, data, fname='<string>'):
+    def parse_xhtml(self, data, fname='<string>', force_html5_parse=False):
         if self.tweak_mode:
-            return parse_html_tweak(data, log=self.log, decoder=self.decode)
+            return parse_html_tweak(data, log=self.log, decoder=self.decode, force_html5_parse=force_html5_parse)
         else:
             try:
                 return parse_html(
@@ -985,9 +985,13 @@ class EpubContainer(Container):
             f.write(guess_type('a.epub'))
         zip_rebuilder(self.root, outpath)
 
-    @property
+    @dynamic_property
     def path_to_ebook(self):
-        return self.pathtoepub
+        def fget(self):
+            return self.pathtoepub
+        def fset(self, val):
+            self.pathtoepub = val
+        return property(fget=fget, fset=fset)
 
 # }}}
 
@@ -1097,9 +1101,13 @@ class AZW3Container(Container):
             outpath = self.pathtoazw3
         opf_to_azw3(self.name_path_map[self.opf_name], outpath, self.log)
 
-    @property
+    @dynamic_property
     def path_to_ebook(self):
-        return self.pathtoazw3
+        def fget(self):
+            return self.pathtoazw3
+        def fset(self, val):
+            self.pathtoazw3 = val
+        return property(fget=fget, fset=fset)
 
     @property
     def names_that_must_not_be_changed(self):

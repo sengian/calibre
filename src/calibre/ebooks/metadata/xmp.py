@@ -6,17 +6,19 @@ from __future__ import (unicode_literals, division, absolute_import,
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, sys
+import re, sys, copy, json
 from itertools import repeat
 from collections import defaultdict
 
 from lxml import etree
 from lxml.builder import ElementMaker
 
-from calibre import replace_entities
+from calibre import prints
 from calibre.ebooks.metadata import check_isbn, check_doi
 from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.metadata.opf2 import dump_dict
 from calibre.utils.date import parse_date, isoformat, now
+from calibre.utils.localization import canonicalize_lang, lang_as_iso639_1
 
 _xml_declaration = re.compile(r'<\?xml[^<>]+encoding\s*=\s*[\'"](.*?)[\'"][^<>]*>', re.IGNORECASE)
 
@@ -38,6 +40,7 @@ NS_MAP = {
     'x': 'adobe:ns:meta/',
     'calibre': 'http://calibre-ebook.com/xmp-namespace',
     'calibreSI': 'http://calibre-ebook.com/xmp-namespace-series-index',
+    'calibreCC': 'http://calibre-ebook.com/xmp-namespace-custom-columns',
 }
 KNOWN_ID_SCHEMES = {'isbn', 'url', 'doi'}
 
@@ -79,8 +82,8 @@ def serialize_xmp_packet(root, encoding='utf-8'):
 def read_simple_property(elem):
     # A simple property
     if elem.text:
-        return replace_entities(elem.text)
-    return replace_entities(elem.get(expand('rdf:resource'), ''))
+        return elem.text
+    return elem.get(expand('rdf:resource'), '')
 
 def read_lang_alt(parent):
     # A text value with possible alternate values in different languages
@@ -152,6 +155,28 @@ def read_series(root):
                 return series, series_index
     return None, None
 
+def read_user_metadata(mi, root):
+    from calibre.utils.config import from_json
+    from calibre.ebooks.metadata.book.json_codec import decode_is_multiple
+    fields = set()
+    for item in XPath('//calibre:custom_metadata')(root):
+        for li in XPath('./rdf:Bag/rdf:li')(item):
+            name = XPath('descendant::calibreCC:name')(li)
+            if name:
+                name = name[0].text
+                if name.startswith('#') and name not in fields:
+                    val = XPath('descendant::rdf:value')(li)
+                    if val:
+                        fm = val[0].text
+                        try:
+                            fm = json.loads(fm, object_hook=from_json)
+                            decode_is_multiple(fm)
+                            mi.set_user_metadata(name, fm)
+                            fields.add(name)
+                        except:
+                            prints('Failed to read user metadata:', name)
+                            import traceback
+                            traceback.print_exc()
 
 def read_xmp_identifers(parent):
     ''' For example:
@@ -201,6 +226,12 @@ def metadata_from_xmp_packet(raw_bytes):
     bkp = first_simple('//xmp:CreatorTool', root)
     if bkp:
         mi.book_producer = bkp
+    md = first_simple('//xmp:MetadataDate', root)
+    if md:
+        try:
+            mi.metadata_date = parse_date(md)
+        except:
+            pass
     rating = first_simple('//calibre:rating', root)
     if rating is not None:
         try:
@@ -218,6 +249,19 @@ def metadata_from_xmp_packet(raw_bytes):
             if val:
                 setattr(mi, x, val)
                 break
+    for x in ('author_link_map', 'user_categories'):
+        val = first_simple('//calibre:'+x, root)
+        if val:
+            try:
+                setattr(mi, x, json.loads(val))
+            except:
+                pass
+
+    languages = multiple_sequences('//dc:language', root)
+    if languages:
+        languages = filter(None, map(canonicalize_lang, languages))
+        if languages:
+            mi.languages = languages
 
     identifiers = {}
     for xmpid in XPath('//xmp:Identifier')(root):
@@ -247,17 +291,37 @@ def metadata_from_xmp_packet(raw_bytes):
     if identifiers:
         mi.set_identifiers(identifiers)
 
+    read_user_metadata(mi, root)
+
     return mi
 
-def consolidate_metadata(info_mi, xmp_packet):
-    ' When both the PDF Info dict and XMP metadata are present, prefer the xmp metadata '
+def consolidate_metadata(info_mi, info):
+    ''' When both the PDF Info dict and XMP metadata are present, prefer the xmp
+    metadata unless the Info ModDate is never than the XMP MetadataDate. This
+    is the algorithm recommended by the PDF spec. '''
     try:
-        xmp_mi = metadata_from_xmp_packet(xmp_packet)
+        xmp_mi = metadata_from_xmp_packet(info['xmp_metadata'])
     except:
         import traceback
         traceback.print_exc()
+        return info_mi
+    info_title, info_authors, info_tags = info_mi.title or _('Unknown'), list(info_mi.authors or ()), list(info_mi.tags or ())
+    info_mi.smart_update(xmp_mi, replace_metadata=True)
+    prefer_info = False
+    if 'ModDate' in info and hasattr(xmp_mi, 'metadata_date'):
+        try:
+            info_date = parse_date(info['ModDate'])
+        except:
+            pass
+        else:
+            prefer_info = info_date > xmp_mi.metadata_date
+    if prefer_info:
+        info_mi.title, info_mi.authors, info_mi.tags = info_title, info_authors, info_tags
     else:
-        info_mi.smart_update(xmp_mi, replace_metadata=True)
+        # We'll use the xmp tags/authors but fallback to the info ones if the
+        # xmp does not have tags/authors. smart_update() should have taken care of
+        # the rest
+        info_mi.authors, info_mi.tags = xmp_mi.authors or info_mi.authors, xmp_mi.tags or info_mi.tags
     return info_mi
 
 def nsmap(*args):
@@ -319,6 +383,35 @@ def create_series(calibre, series, series_index):
     si.text = '%.2f' % series_index
     s.append(si)
 
+def create_user_metadata(calibre, all_user_metadata):
+    from calibre.utils.config import to_json
+    from calibre.ebooks.metadata.book.json_codec import object_to_unicode, encode_is_multiple
+
+    s = calibre.makeelement(expand('calibre:custom_metadata'))
+    calibre.append(s)
+    bag = s.makeelement(expand('rdf:Bag'))
+    s.append(bag)
+    for name, fm in all_user_metadata.iteritems():
+        try:
+            fm = copy.copy(fm)
+            encode_is_multiple(fm)
+            fm = object_to_unicode(fm)
+            fm = json.dumps(fm, default=to_json, ensure_ascii=False)
+        except:
+            prints('Failed to write user metadata:', name)
+            import traceback
+            traceback.print_exc()
+            continue
+        li = bag.makeelement(expand('rdf:li'))
+        li.set(expand('rdf:parseType'), 'Resource')
+        bag.append(li)
+        n = li.makeelement(expand('calibreCC:name'))
+        li.append(n)
+        n.text = name
+        val = li.makeelement(expand('rdf:value'))
+        val.text = fm
+        li.append(val)
+
 def metadata_to_xmp_packet(mi):
     A = ElementMaker(namespace=NS_MAP['x'], nsmap=nsmap('x'))
     R = ElementMaker(namespace=NS_MAP['rdf'], nsmap=nsmap('rdf'))
@@ -339,6 +432,10 @@ def metadata_to_xmp_packet(mi):
         create_sequence_property(dc, tag, val, ordered)
     if not mi.is_null('pubdate'):
         create_sequence_property(dc, 'dc:date', [isoformat(mi.pubdate, as_utc=False)])  # Adobe spec recommends local time
+    if not mi.is_null('languages'):
+        langs = filter(None, map(lambda x:lang_as_iso639_1(x) or canonicalize_lang(x), mi.languages))
+        if langs:
+            create_sequence_property(dc, 'dc:language', langs, ordered=False)
 
     xmp = rdf.makeelement(expand('rdf:Description'), nsmap=nsmap('xmp', 'xmpidq'))
     xmp.set(expand('rdf:about'), '')
@@ -363,7 +460,7 @@ def metadata_to_xmp_packet(mi):
     d.text = isoformat(now(), as_utc=False)
     xmp.append(d)
 
-    calibre = rdf.makeelement(expand('rdf:Description'), nsmap=nsmap('calibre', 'calibreSI'))
+    calibre = rdf.makeelement(expand('rdf:Description'), nsmap=nsmap('calibre', 'calibreSI', 'calibreCC'))
     calibre.set(expand('rdf:about'), '')
     rdf.append(calibre)
     if not mi.is_null('rating'):
@@ -375,9 +472,20 @@ def metadata_to_xmp_packet(mi):
             create_simple_property(calibre, 'calibre:rating', '%g' % r)
     if not mi.is_null('series'):
         create_series(calibre, mi.series, mi.series_index)
+    if not mi.is_null('timestamp'):
+        create_simple_property(calibre, 'calibre:timestamp', isoformat(mi.timestamp, as_utc=False))
+    for x in ('author_link_map', 'user_categories'):
+        val = getattr(mi, x, None)
+        if val:
+            create_simple_property(calibre, 'calibre:'+x, dump_dict(val))
+
     for x in ('title_sort', 'author_sort'):
         if not mi.is_null(x):
             create_simple_property(calibre, 'calibre:'+x, getattr(mi, x))
+
+    all_user_metadata = mi.get_all_user_metadata(True)
+    if all_user_metadata:
+        create_user_metadata(calibre, all_user_metadata)
     return serialize_xmp_packet(root)
 
 def find_used_namespaces(elem):

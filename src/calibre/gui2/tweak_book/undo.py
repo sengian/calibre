@@ -108,6 +108,7 @@ class GlobalUndoHistory(QAbstractListModel):
             self.beginRemoveRows(ROOT, 0, num - 1)
             cleanup(self.states[:num])
             self.states = self.states[num:]
+            self.pos -= num
             self.endRemoveRows()
 
     def rewind_savepoint(self):
@@ -166,6 +167,10 @@ class GlobalUndoHistory(QAbstractListModel):
         if not self.can_redo:
             return ''
         return self.states[self.pos + 1].message or _('[Unnamed state]')
+
+    def update_path_to_ebook(self, path):
+        for state in self.states:
+            state.container.path_to_ebook = path
 
 class SpacedDelegate(QStyledItemDelegate):
 
