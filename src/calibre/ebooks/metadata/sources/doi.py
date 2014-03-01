@@ -12,15 +12,32 @@ from urllib2 import HTTPError
 from lxml import etree
 
 from calibre.ebooks.chardet import xml_to_unicode
-from calibre.ebooks.metadata import check_doi
+from calibre.ebooks.metadata import check_doi, check_isbn
 from calibre.ebooks.metadata.sources.base import Source
 from calibre.ebooks.metadata.book.base import Metadata
 from calibre.utils.icu import lower
 from calibre.utils.cleantext import clean_ascii_chars
+from calibre.utils.date import parse_only_date
 
 # An ordered list of the preferred content type for metadata retrieval
 _ORDERED_CONTENT_TYPES = ['application/vnd.crossref.unixref+xml',
                     'application/vnd.datacite.datacite+xml', 'application/rdf+xml']
+
+def author_unixref(author):
+    given_name = author.findtext('given_name', default='')
+    surname = author.findtext('surname', default='')
+    if given_name:
+        return '%s %s' % (given_name, surname)
+    else:
+        return surname
+
+def date_unixref(pubdate):
+    month = pubdate.findtext('month', default='')
+    year = pubdate.findtext('year', default='')
+    date = year
+    if month:
+        date = year+'/'+month
+    return parse_only_date(date, assume_utc=True)
 
 class DOI(Source):
 
@@ -71,33 +88,80 @@ class DOI(Source):
         if xml_tree is not None and not abort.is_set():
             # Parse the result and put it in the queue
             # log.error(etree.tostring(xml_tree, pretty_print=True, with_tail=True, method='xml'))
-            result = self.parse_feed(content_type, xml_tree)
+            result = self.parse_feed(content_type, xml_tree, log)
             if result is not None:
+                result = clean_downloaded_metadata(result)
                 result_queue.put(result)
  
-    def parse_feed(self, content_type, tree):
+    def parse_feed(self, content_type, tree, log):
         # Determine the type of content
         if content_type == 'application/vnd.crossref.unixref+xml':
             # Crossref unixref
-            mi = self.parse_unixref(tree)
+            contents = self.parse_unixref(tree, log)
         elif content_type == 'application/vnd.datacite.datacite+xml':
             # DataCite Metadata Schema
-            mi = self.parse_datacite(tree)
+            contents = self.parse_datacite(tree, log)
         elif content_type == 'application/rdf+xml':
             # Simple rdf/xml
-            mi = self.parse_rdf(tree)
+            contents = self.parse_rdf(tree, log)
         else:
             # Unknown content, theoretically impossible
             err = 'Unknown content type sent by the server, weird!'
             log.error(err)
             return None
 
+        title = None
+        if contents['title']:
+            title = contents['title']
+        authors = []
+        if contents['authors']:
+            authors = contents['authors']
+        mi = Metadata(title, authors)
+        # log.error(repr(contents))
         return mi
 
-    def parse_unixref(self, tree):
+    def parse_unixref(self, tree,log):
         # Parse an Unixref Crossref xml
+        # Scheme: http://doi.crossref.org/schemas/unixref1.1.xsd
+        contents = {}
+        # Title
+        title = tree.xpath('.//titles/title')
+        if title:
+            contents['title'] = [elt.text.strip() for elt in title]
+            if len(contents['title'])<2:
+                contents['title'] = contents['title'][0]
+        # Authors
+        authors = tree.xpath('.//contributors')
+        if authors and authors[0].getchildren():
+            contents['first_author'] = author_unixref(authors[0].xpath('descendant::person_name[@sequence="first"]')[0])
+            contents['authors'] = [author_unixref(aut) for aut in authors[0].iterchildren(tag='person_name')]
+        # Journal
+        journal = tree.xpath('.//journal/journal_metadata')
+        if journal:
+            journal_data = {
+                            'full_journal_title':'full_title',
+                            'abbrev_journal_title':'abbrev_title',
+                            'issn_print_journal':'issn[@media_type="print"]',
+                            'issn_electronic_journal':'issn[@media_type="electronic"]',
+                            'coden_journal':'coden'
+                            }
+            for k,xpathexp in journal_data.iteritems():
+                elt = journal[0].xpath('descendant::%s'%(xpathexp,))
+                if elt:
+                    contents[k] = elt[0].text.strip()
+        issue = tree.xpath('.//journal/journal_issue')
+        if issue:
+            pub_date = journal[0].xpath('descendant::publication_date[@media_type="print"]')
+            if pub_date:
+                contents['publication_date'] = date_unixref(pub_date[0])
+            volume = journal[0].xpath('descendant::journal_volume/volume')
+            if volume:
+                contents['journal_volume'] = volume[0].text.strip()
+            issue = journal[0].xpath('descendant::issue')
+            if issue:
+                contents['journal_issue'] = issue[0].text.strip()
 
-        return None
+        return contents
 
     def parse_datacite(self, tree):
         # Parse an DataCite Metadata Schema xml
@@ -109,79 +173,7 @@ class DOI(Source):
 
         return None
 
-        # def tostring(x):
-            # if x is None:
-                # return ''
-            # return etree.tostring(x, method='text', encoding=unicode).strip()
-
-        # orig_isbn = identifiers.get('isbn', None)
-        # title_tokens = list(self.get_title_tokens(orig_title))
-        # author_tokens = list(self.get_author_tokens(orig_authors))
-        # results = []
-
-        # def ismatch(title, authors):
-            # authors = lower(' '.join(authors))
-            # title = lower(title)
-            # match = not title_tokens
-            # for t in title_tokens:
-                # if lower(t) in title:
-                    # match = True
-                    # break
-            # amatch = not author_tokens
-            # for a in author_tokens:
-                # if lower(a) in authors:
-                    # amatch = True
-                    # break
-            # if not author_tokens: amatch = True
-            # return match and amatch
-
-        # bl = feed.find('BookList')
-        # if bl is None:
-            # err = tostring(feed.find('errormessage'))
-            # raise ValueError('ISBNDb query failed:' + err)
-        # total_results = int(bl.get('total_results'))
-        # shown_results = int(bl.get('shown_results'))
-        # for bd in bl.xpath('.//BookData'):
-            # isbn = check_isbn(bd.get('isbn', None))
-            # isbn13 = check_isbn(bd.get('isbn13', None))
-            # if not isbn and not isbn13:
-                # continue
-            # if orig_isbn and orig_isbn not in {isbn, isbn13}:
-                # continue
-            # title = tostring(bd.find('Title'))
-            # if not title:
-                # continue
-            # authors = []
-            # for au in bd.xpath('.//Authors/Person'):
-                # au = tostring(au)
-                # if au:
-                    # if ',' in au:
-                        # ln, _, fn = au.partition(',')
-                        # au = fn.strip() + ' ' + ln.strip()
-                # authors.append(au)
-            # if not authors:
-                # continue
-            # comments = tostring(bd.find('Summary'))
-            # id_ = (title, tuple(authors))
-            # if id_ in seen:
-                # continue
-            # seen.add(id_)
-            # if not ismatch(title, authors):
-                # continue
-            # publisher = tostring(bd.find('PublisherText'))
-            # if not publisher: publisher = None
-            # if publisher and 'audio' in publisher.lower():
-                # continue
-            # mi = Metadata(title, authors)
-            # mi.isbn = isbn
-            # mi.publisher = publisher
-            # mi.comments = comments
-            # results.append(mi)
-        # return total_results, shown_results, results
-
     def make_query(self, q, log, timeout=30):
-
-        parser = etree.XMLParser(recover=True, no_network=True)
         br = self.browser
         try:
             raw = br.open_novisit(q, timeout=timeout)
@@ -208,12 +200,13 @@ class DOI(Source):
                 log.error(err)
             return None, None
 
-        # Datacite isn't kind enough to send a status so we manage...
+        # Some servers aren't kind enough to send a status so we manage...
         # Assume that if there is no error, we send to the parser
         return self.tree_with_content_type(raw)
 
     def tree_with_content_type(self, raw):
         # Parse the request & return a tree & a content type
+        parser = etree.XMLParser(recover=True, no_network=True)
         return raw.info().dict['content-type'], \
                     etree.fromstring(xml_to_unicode(clean_ascii_chars(raw.read()),
                     strip_encoding_pats=True)[0], parser=parser)
@@ -240,11 +233,11 @@ if __name__ == '__main__':
 
             # Crossref:
             # - Journal article
-            # (
-                # {'identifiers':{'doi':'10.10.1038/nphys1170'}},
-                # [title_test('Quantum tomography: Measured measurement', exact=True),
-                # authors_test(['Markus Aspelmeyer'])]
-            # ),
+            (
+                {'identifiers':{'doi':'10.10.1038/nphys1170'}},
+                [title_test('Quantum tomography: Measured measurement', exact=True),
+                authors_test(['Markus Aspelmeyer'])]
+            ),
 
             # - Book Chapter
             # (
@@ -255,11 +248,11 @@ if __name__ == '__main__':
 
             # Datacite:
             # -Sets & Subsets
-            (
-                {'identifiers':{'doi':'10.1594/PANGAEA.726855'}},
-                [title_test('Chemical and mineral compositions of sediments from ODP Site 127-797', exact=True),
-                authors_test(['Irino, T'])]
-            ),
+            # (
+                # {'identifiers':{'doi':'10.1594/PANGAEA.726855'}},
+                # [title_test('Chemical and mineral compositions of sediments from ODP Site 127-797', exact=True),
+                # authors_test(['Irino, T'])]
+            # ),
 
             # Institute of Scientific and Technical Information of China (ISTIC):
             # - Journal article
