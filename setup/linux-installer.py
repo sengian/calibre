@@ -349,7 +349,7 @@ def get_proxies(debug=True):
             del proxies[key]
 
     if proxies and debug:
-        prints('Using proxies:', proxies)
+        prints('Using proxies:', repr(proxies))
     return proxies
 
 class HTTPError(ValueError):
@@ -441,11 +441,16 @@ def match_hostname(cert, hostname):
                     if _dnsname_match(value, hostname):
                         return
                     dnsnames.append(value)
+
     if len(dnsnames) > 1:
         raise CertificateError("hostname %r "
             "doesn't match either of %s"
             % (hostname, ', '.join(map(repr, dnsnames))))
     elif len(dnsnames) == 1:
+        # python 2.6 does not read subjectAltName, so we do the best we can
+        if sys.version_info[:2] == (2, 6):
+            if dnsnames[0] == 'calibre-ebook.com':
+                return
         raise CertificateError("hostname %r "
             "doesn't match %r"
             % (hostname, dnsnames[0]))
@@ -474,8 +479,12 @@ else:
             certificate, both that it is valid and that its declared hostnames
             match the hostname we are connecting to."""
 
-            sock = socket.create_connection((self.host, self.port),
+            if hasattr(self, 'source_address'):
+                sock = socket.create_connection((self.host, self.port),
                                             self.timeout, self.source_address)
+            else:
+                # python 2.6 has no source_address
+                sock = socket.create_connection((self.host, self.port), self.timeout)
             if self._tunnel_host:
                 self.sock = sock
                 self._tunnel()
@@ -570,7 +579,7 @@ def get_https_resource_securely(url, timeout=60, max_redirects=5, ssl_version=No
             if response.status != httplib.OK:
                 raise HTTPError(url, response.status)
             return response.read()
-
+# }}}
 
 def extract_tarball(tar, destdir):
     prints('Extracting application files...')

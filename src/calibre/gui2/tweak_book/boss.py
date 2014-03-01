@@ -37,7 +37,7 @@ from calibre.gui2.tweak_book.toc import TOCEditor
 from calibre.gui2.tweak_book.editor import editor_from_syntax, syntax_from_mime
 from calibre.gui2.tweak_book.editor.insert_resource import get_resource_data, NewBook
 from calibre.gui2.tweak_book.preferences import Preferences
-from calibre.gui2.tweak_book.widgets import RationalizeFolders, MultiSplit
+from calibre.gui2.tweak_book.widgets import RationalizeFolders, MultiSplit, ImportForeign
 
 _diff_dialogs = []
 
@@ -167,6 +167,23 @@ class Boss(QObject):
                 create_book(d.mi, path, fmt=fmt)
                 self.open_book(path=path)
 
+    def import_book(self, path=None):
+        if not self._check_before_open():
+            return
+        d = ImportForeign(self.gui)
+        if hasattr(path, 'rstrip'):
+            d.set_src(os.path.abspath(path))
+        if d.exec_() == d.Accepted:
+            for name in tuple(editors):
+                self.close_editor(name)
+            from calibre.ebooks.oeb.polish.import_book import import_book_as_epub
+            src, dest = d.data
+            self._clear_notify_data = True
+            def func(src, dest, tdir):
+                import_book_as_epub(src, dest)
+                return get_container(dest, tdir=tdir)
+            self.gui.blocking_job('import_book', _('Importing book, please wait...'), self.book_opened, func, src, dest, tdir=self.mkdtemp())
+
     def open_book(self, path=None, edit_file=None, clear_notify_data=True):
         if not self._check_before_open():
             return
@@ -179,6 +196,9 @@ class Boss(QObject):
 
         ext = path.rpartition('.')[-1].upper()
         if ext not in SUPPORTED:
+            from calibre.ebooks.oeb.polish.import_book import IMPORTABLE
+            if ext.lower() in IMPORTABLE:
+                return self.import_book(path)
             return error_dialog(self.gui, _('Unsupported format'),
                 _('Tweaking is only supported for books in the %s formats.'
                   ' Convert your book to one of these formats first.') % _(' and ').join(sorted(SUPPORTED)),
@@ -791,6 +811,8 @@ class Boss(QObject):
                 count = do_all()
                 if count == 0:
                     self.rewind_savepoint()
+                else:
+                    self.set_modified()
                 return
             if action == 'count':
                 if marked:
@@ -837,8 +859,9 @@ class Boss(QObject):
                         show_copy_button=False, show=True)
             fmt = path_to_ebook.rpartition('.')[-1].lower()
             start_dir = find_first_existing_ancestor(path_to_ebook)
-            path = choose_save_file(self.gui, 'choose-new-save-location', _('Choose file location'), initial_dir=start_dir,
-                                    filters=[(fmt.upper(), (fmt,))], all_files=False)
+            path = choose_save_file(
+                self.gui, 'choose-new-save-location', _('Choose file location'), initial_path=os.path.join(start_dir, os.path.basename(path_to_ebook)),
+                filters=[(fmt.upper(), (fmt,))], all_files=False)
             if path is not None:
                 if not path.lower().endswith('.' + fmt):
                     path = path + '.' + fmt

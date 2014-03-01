@@ -339,7 +339,6 @@ class FileList(QTreeWidget):
                     icon = self.rendered_emblem_cache[emblems] = canvas
             item.setData(0, Qt.DecorationRole, icon)
 
-        ok_to_be_unmanifested = container.names_that_need_not_be_manifested
         cannot_be_renamed = container.names_that_must_not_be_changed
         ncx_mime = guess_type('a.ncx')
 
@@ -371,7 +370,7 @@ class FileList(QTreeWidget):
             if imt == ncx_mime:
                 emblems.append('toc.png')
                 tooltips.append(_('This file contains the metadata table of contents'))
-            if name not in manifested_names and name not in ok_to_be_unmanifested:
+            if name not in manifested_names and not container.ok_to_be_unmanifested(name):
                 emblems.append('dialog_question.png')
                 tooltips.append(_('This file is not listed in the book manifest'))
             if linear is False:
@@ -617,7 +616,7 @@ class FileList(QTreeWidget):
 
     def export(self, name):
         path = choose_save_file(self, 'tweak_book_export_file', _('Choose location'), filters=[
-            (_('Files'), [name.rpartition('.')[-1].lower()])], all_files=False)
+            (_('Files'), [name.rpartition('.')[-1].lower()])], all_files=False, initial_filename=name.split('/')[-1])
         if path:
             self.export_requested.emit(name, path)
 
