@@ -494,7 +494,7 @@ def create_inline_toc(container, title=None):
         return None
     toc_name = find_inline_toc(container)
 
-    def process_node(html_parent, toc, level=1, indent='  '):
+    def process_node(html_parent, toc, level=1, indent='  ', style_level=2):
         li = html_parent.makeelement(XHTML('li'))
         li.tail = '\n'+ (indent*level)
         html_parent.append(li)
@@ -509,12 +509,13 @@ def create_inline_toc(container, title=None):
         li.append(a)
         if len(toc) > 0:
             parent = li.makeelement(XHTML('ul'))
+            parent.set('class', 'level%d' % (style_level))
             li.append(parent)
             a.tail = '\n\n' + (indent*(level+2))
             parent.text = '\n'+(indent*(level+3))
             parent.tail = '\n\n' + (indent*(level+1))
             for child in toc:
-                process_node(parent, child, level+3)
+                process_node(parent, child, level+3, style_level=style_level + 1)
             parent[-1].tail = '\n' + (indent*(level+2))
 
     E = ElementMaker(namespace=XHTML_NS, nsmap={None:XHTML_NS})
@@ -534,8 +535,10 @@ def create_inline_toc(container, title=None):
     )
 
     name = toc_name
+    ul = html[1][1]
+    ul.set('class', 'level1')
     for child in toc:
-        process_node(html[1][1], child)
+        process_node(ul, child)
     if lang:
         html.set('lang', lang)
     pretty_html_tree(container, html)

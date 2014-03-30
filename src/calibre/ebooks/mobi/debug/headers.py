@@ -101,7 +101,7 @@ class PalmDB(object):
         return '\n'.join(ans)
 # }}}
 
-class Record(object): # {{{
+class Record(object):  # {{{
 
     def __init__(self, raw, header):
         self.offset, self.flags, self.uid = header
@@ -160,17 +160,17 @@ class EXTHRecord(object):
                 202 : 'ThumbOffset',
                 203 : 'Fake Cover',
                 204 : 'Creator Software',
-                205 : 'Creator Major Version', # '>I'
-                206 : 'Creator Minor Version', # '>I'
-                207 : 'Creator Build Number', # '>I'
+                205 : 'Creator Major Version',  # '>I'
+                206 : 'Creator Minor Version',  # '>I'
+                207 : 'Creator Build Number',  # '>I'
                 208 : 'Watermark',
                 209 : 'Tamper Proof Keys [hex]',
                 300 : 'Font Signature [hex]',
-                301 : 'Clipping Limit [3xx]', # percentage '>B'
-                401 : 'Clipping Limit', # percentage '>B'
+                301 : 'Clipping Limit [3xx]',  # percentage '>B'
+                401 : 'Clipping Limit',  # percentage '>B'
                 402 : 'Publisher Limit',
-                404 : 'Text to Speech Disabled', # '>B' 1 - TTS disabled 0 - TTS enabled
-                501 : 'CDE Type', # 4 chars (PDOC, EBOK, MAGZ, ...)
+                404 : 'Text to Speech Disabled',  # '>B' 1 - TTS disabled 0 - TTS enabled
+                501 : 'CDE Type',  # 4 chars (PDOC, EBOK, MAGZ, ...)
                 502 : 'last_update_time',
                 503 : 'Updated Title',
                 504 : 'ASIN [5xx]',
@@ -243,7 +243,7 @@ class EXTHHeader(object):
         return '\n'.join(ans)
 # }}}
 
-class MOBIHeader(object): # {{{
+class MOBIHeader(object):  # {{{
 
     def __init__(self, record0, offset):
         self.raw = record0.raw
@@ -358,7 +358,7 @@ class MOBIHeader(object): # {{{
         if self.length >= 248:
             (self.sect_idx, self.skel_idx, self.datp_idx, self.oth_idx
                     ) = struct.unpack_from(b'>4L', self.raw, 248)
-            self.unknown9 = self.raw[264:self.length]
+            self.unknown9 = self.raw[264:self.length+16]
             if self.meta_orth_indx not in {NULL_INDEX, self.sect_idx}:
                 raise ValueError('KF8 header has different Meta orth and '
                         'section indices')
@@ -427,8 +427,8 @@ class MOBIHeader(object): # {{{
         r('First Image index', 'first_image_index')
         r('Huffman record offset', 'huffman_record_offset')
         a('Huffman record count: %d'%self.huffman_record_count)
-        r('DATP record offset', 'datp_record_offset')
-        a('DATP record count: %r'%self.datp_record_count)
+        r('Huffman table offset', 'datp_record_offset')
+        a('Huffman table length: %r'%self.datp_record_count)
         a('EXTH flags: %s (%s)'%(bin(self.exth_flags)[2:], self.has_exth))
         if self.has_drm_data:
             a('Unknown3: %r'%self.unknown3)
@@ -455,7 +455,7 @@ class MOBIHeader(object): # {{{
             a(('Extra data flags: %s (has multibyte: %s) '
                 '(has indexing: %s) (has uncrossable breaks: %s)')%(
                     bin(self.extra_data_flags), self.has_multibytes,
-                    self.has_indexing_bytes, self.has_uncrossable_breaks ))
+                    self.has_indexing_bytes, self.has_uncrossable_breaks))
             r('NCX index', 'primary_index_record')
         if self.length >= 248:
             r('Sections Index', 'sect_idx')
@@ -551,7 +551,7 @@ class MOBIFile(object):
 
         self.decompress6, self.decompress8 = d6, d8
 
-class TextRecord(object): # {{{
+class TextRecord(object):  # {{{
 
     def __init__(self, idx, record, extra_data_flags, decompress):
         self.trailing_data, self.raw = get_trailing_data(record.raw, extra_data_flags)

@@ -27,7 +27,8 @@ def fcis(text_length):
     fcis += b'\x28\x00\x00\x00\x08\x00\x01\x00\x01\x00\x00\x00\x00'
     return fcis
 
-class MOBIHeader(Header): # {{{
+class MOBIHeader(Header):  # {{{
+
     '''
     Represents the first record in a MOBI file, contains all the metadata about
     the file.
@@ -59,7 +60,7 @@ class MOBIHeader(Header): # {{{
     ident = b'MOBI'
 
     # 20: Header length
-    header_length = 248
+    header_length = 264
 
     # 24: Book Type (0x2 - Book, 0x101 - News hierarchical, 0x102 - News
     # (flat), 0x103 - News magazine same as 0x101)
@@ -115,9 +116,8 @@ class MOBIHeader(Header): # {{{
     # 112: Huff/CDIC compression
     huff_first_record
     huff_count
-
-    # 120: Unknown (Maybe DATP related, maybe HUFF/CDIC related)
-    maybe_datp = zeroes(8)
+    huff_table_offset = zeroes(4)
+    huff_table_length = zeroes(4)
 
     # 128: EXTH flags
     exth_flags = DYN
@@ -174,7 +174,13 @@ class MOBIHeader(Header): # {{{
     datp_index = NULL
     guide_index = DYN
 
-    # 264: EXTH
+    # 264: Unknown
+    unknown5 = nulls(4)
+    unknown6 = zeroes(4)
+    unknown7 = nulls(4)
+    unknown8 = zeroes(4)
+
+    # 280: EXTH
     exth = DYN
 
     # Full title
@@ -261,7 +267,7 @@ class KF8Book(object):
         self.records.append(fcis(self.text_length))
 
         # EOF
-        self.records.append(b'\xe9\x8e\r\n') # EOF record
+        self.records.append(b'\xe9\x8e\r\n')  # EOF record
 
         # Miscellaneous header fields
         self.compression = writer.compress

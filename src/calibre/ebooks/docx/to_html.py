@@ -32,6 +32,7 @@ from calibre.ebooks.metadata.opf2 import OPFCreator
 from calibre.utils.localization import canonicalize_lang, lang_as_iso639_1
 
 NBSP = '\xa0'
+TEST_INDEX = 'CALIBRE_TEST_INDEX' in os.environ
 
 class Text:
 
@@ -97,6 +98,11 @@ class Convert(object):
         paras = []
 
         self.log.debug('Converting Word markup to HTML')
+
+        if TEST_INDEX:
+            from calibre.ebooks.docx.index import Index
+            self.index = Index(self.fields)
+
         self.read_page_properties(doc)
         self.current_rels = relationships_by_id
         for wp, page_properties in self.page_map.iteritems():
@@ -105,6 +111,7 @@ class Convert(object):
                 p = self.convert_p(wp)
                 self.body.append(p)
                 paras.append(wp)
+
         self.read_block_anchors(doc)
         self.styles.apply_contextual_spacing(paras)
         # Apply page breaks at the start of every section, except the first
@@ -160,6 +167,9 @@ class Convert(object):
         self.images.rid_map = orig_rid_map
 
         self.resolve_links()
+
+        if TEST_INDEX:
+            self.index.generate()
 
         self.styles.cascade(self.layers)
 

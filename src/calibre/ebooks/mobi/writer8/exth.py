@@ -11,6 +11,7 @@ import re
 from struct import pack
 from io import BytesIO
 
+from calibre.constants import iswindows, isosx
 from calibre.ebooks.mobi.utils import (utf8_text, to_base)
 from calibre.utils.localization import lang_as_iso639_1
 from calibre.ebooks.metadata import authors_to_sort_string
@@ -51,7 +52,8 @@ def build_exth(metadata, prefer_author_sort=False, is_periodical=False,
     nrecs = 0
 
     for term in metadata:
-        if term not in EXTH_CODES: continue
+        if term not in EXTH_CODES:
+            continue
         code = EXTH_CODES[term]
         items = metadata[term]
         if term == 'creator':
@@ -148,7 +150,8 @@ def build_exth(metadata, prefer_author_sort=False, is_periodical=False,
         nrecs += 1
 
     if be_kindlegen2:
-        vals = {204:201, 205:2, 206:5, 207:0}
+        mv = 200 if iswindows else 202 if isosx else 201
+        vals = {204:mv, 205:2, 206:9, 207:0}
     elif is_periodical:
         # Pretend to be amazon's super secret periodical generator
         vals = {204:201, 205:2, 206:0, 207:101}
@@ -157,6 +160,10 @@ def build_exth(metadata, prefer_author_sort=False, is_periodical=False,
         vals = {204:201, 205:1, 206:2, 207:33307}
     for code, val in vals.iteritems():
         exth.write(pack(b'>III', code, 12, val))
+        nrecs += 1
+    if be_kindlegen2:
+        revnum = b'0730-890adc2'
+        exth.write(pack(b'>II', 535, 8 + len(revnum)) + revnum)
         nrecs += 1
 
     if cover_offset is not None:
@@ -200,7 +207,7 @@ def build_exth(metadata, prefer_author_sort=False, is_periodical=False,
 
     exth = exth.getvalue()
     trail = len(exth) % 4
-    pad = b'\0' * (4 - trail) # Always pad w/ at least 1 byte
+    pad = b'\0' * (4 - trail)  # Always pad w/ at least 1 byte
     exth = [b'EXTH', pack(b'>II', len(exth) + 12, nrecs), exth, pad]
     return b''.join(exth)
 
