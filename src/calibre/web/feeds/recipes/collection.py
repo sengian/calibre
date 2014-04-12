@@ -120,43 +120,55 @@ def get_custom_recipe_collection(*args):
 
 
 def update_custom_recipe(id_, title, script):
+    update_custom_recipes( [(id_, title, script)] )
+
+def update_custom_recipes(script_ids):
     from calibre.web.feeds.recipes import custom_recipes, \
             custom_recipe_filename
-    id_ = str(int(id_))
-    existing = custom_recipes.get(id_, None)
+
     bdir = os.path.dirname(custom_recipes.file_path)
+    for id_, title, script in script_ids:
 
-    if existing is None:
-        fname = custom_recipe_filename(id_, title)
-    else:
-        fname = existing[1]
-    if isinstance(script, unicode):
-        script = script.encode('utf-8')
+        id_ = str(int(id_))
+        existing = custom_recipes.get(id_, None)
 
-    custom_recipes[id_] = (title, fname)
+        if existing is None:
+            fname = custom_recipe_filename(id_, title)
+        else:
+            fname = existing[1]
+        if isinstance(script, unicode):
+            script = script.encode('utf-8')
 
-    with open(os.path.join(bdir, fname), 'wb') as f:
-        f.write(script)
+        custom_recipes[id_] = (title, fname)
+
+        with open(os.path.join(bdir, fname), 'wb') as f:
+            f.write(script)
 
 
 def add_custom_recipe(title, script):
+    add_custom_recipes({title:script})
+
+def add_custom_recipes(script_map):
     from calibre.web.feeds.recipes import custom_recipes, \
             custom_recipe_filename
     id_ = 1000
     keys = tuple(map(int, custom_recipes.iterkeys()))
     if keys:
         id_ = max(keys)+1
-    id_ = str(id_)
     bdir = os.path.dirname(custom_recipes.file_path)
+    with custom_recipes:
+        for title, script in script_map.iteritems():
+            fid = str(id_)
 
-    fname = custom_recipe_filename(id_, title)
-    if isinstance(script, unicode):
-        script = script.encode('utf-8')
+            fname = custom_recipe_filename(fid, title)
+            if isinstance(script, unicode):
+                script = script.encode('utf-8')
 
-    custom_recipes[id_] = (title, fname)
+            custom_recipes[fid] = (title, fname)
 
-    with open(os.path.join(bdir, fname), 'wb') as f:
-        f.write(script)
+            with open(os.path.join(bdir, fname), 'wb') as f:
+                f.write(script)
+            id_ += 1
 
 
 def remove_custom_recipe(id_):

@@ -3,14 +3,14 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
 import time, os
 
-from PyQt4.Qt import SIGNAL, QUrl, QAbstractListModel, Qt, \
-        QVariant, QFont
+from PyQt4.Qt import (QUrl, QAbstractListModel, Qt, QVariant, QFont)
 
 from calibre.web.feeds.recipes import compile_recipe, custom_recipes
 from calibre.web.feeds.news import AutomaticNewsRecipe
 from calibre.gui2.dialogs.user_profiles_ui import Ui_Dialog
-from calibre.gui2 import error_dialog, question_dialog, open_url, \
-                         choose_files, ResizableDialog, NONE, open_local_file
+from calibre.gui2 import (
+    error_dialog, question_dialog, open_url, choose_files, ResizableDialog,
+    NONE, open_local_file)
 from calibre.gui2.widgets import PythonHighlighter
 from calibre.ptempfile import PersistentTemporaryFile
 from calibre.utils.icu import sort_key
@@ -60,8 +60,26 @@ class CustomRecipeModel(QAbstractListModel):
             self.recipe_model.update_custom_recipe(urn, title, script)
             self.reset()
 
+    def replace_many_by_title(self, scriptmap):
+        script_urn_map = {}
+        for title, script in scriptmap.iteritems():
+            urn = None
+            for x in self.recipe_model.custom_recipe_collection:
+                if x.get('title', False) == title:
+                    urn = x.get('id')
+            if urn is not None:
+                script_urn_map.update({urn: (title, script)})
+
+        if script_urn_map:
+            self.recipe_model.update_custom_recipes(script_urn_map)
+            self.reset()
+
     def add(self, title, script):
         self.recipe_model.add_custom_recipe(title, script)
+        self.reset()
+
+    def add_many(self, scriptmap):
+        self.recipe_model.add_custom_recipes(scriptmap)
         self.reset()
 
     def remove(self, rows):
@@ -87,23 +105,20 @@ class UserProfiles(ResizableDialog, Ui_Dialog):
         f.setStyleHint(f.Monospace)
         self.source_code.setFont(f)
 
-        self.connect(self.remove_feed_button, SIGNAL('clicked(bool)'),
-                     self.added_feeds.remove_selected_items)
-        self.connect(self.remove_profile_button, SIGNAL('clicked(bool)'),
-                     self.remove_selected_items)
-        self.connect(self.add_feed_button, SIGNAL('clicked(bool)'),
-                     self.add_feed)
-        self.connect(self.load_button, SIGNAL('clicked()'), self.load)
-        self.connect(self.builtin_recipe_button, SIGNAL('clicked()'), self.add_builtin_recipe)
-        self.connect(self.share_button, SIGNAL('clicked()'), self.share)
+        self.remove_feed_button.clicked[(bool)].connect(self.added_feeds.remove_selected_items)
+        self.remove_profile_button.clicked[(bool)].connect(self.remove_selected_items)
+        self.add_feed_button.clicked[(bool)].connect(self.add_feed)
+        self.load_button.clicked[()].connect(self.load)
+        self.opml_button.clicked[()].connect(self.opml_import)
+        self.builtin_recipe_button.clicked[()].connect(self.add_builtin_recipe)
+        self.share_button.clicked[()].connect(self.share)
         self.show_recipe_files_button.clicked.connect(self.show_recipe_files)
-        self.connect(self.down_button, SIGNAL('clicked()'), self.down)
-        self.connect(self.up_button, SIGNAL('clicked()'), self.up)
-        self.connect(self.add_profile_button, SIGNAL('clicked(bool)'),
-                     self.add_profile)
-        self.connect(self.feed_url, SIGNAL('returnPressed()'), self.add_feed)
-        self.connect(self.feed_title, SIGNAL('returnPressed()'), self.add_feed)
-        self.connect(self.toggle_mode_button, SIGNAL('clicked(bool)'), self.toggle_mode)
+        self.down_button.clicked[()].connect(self.down)
+        self.up_button.clicked[()].connect(self.up)
+        self.add_profile_button.clicked[(bool)].connect(self.add_profile)
+        self.feed_url.returnPressed[()].connect(self.add_feed)
+        self.feed_title.returnPressed[()].connect(self.add_feed)
+        self.toggle_mode_button.clicked[(bool)].connect(self.toggle_mode)
         self.clear()
 
     def show_recipe_files(self, *args):
@@ -156,9 +171,9 @@ class UserProfiles(ResizableDialog, Ui_Dialog):
         url.addQueryItem('attachment', pt.name)
         open_url(url)
 
-
     def current_changed(self, current, previous):
-        if not current.isValid(): return
+        if not current.isValid():
+            return
         src = self._model.script(current)
         if src is None:
             return
@@ -186,7 +201,6 @@ class UserProfiles(ResizableDialog, Ui_Dialog):
                 self.source_code.setPlainText(src.replace('BasicUserRecipe', 'AdvancedUserRecipe'))
                 self.highlighter = PythonHighlighter(self.source_code.document())
 
-
     def add_feed(self, *args):
         title = unicode(self.feed_title.text()).strip()
         if not title:
@@ -207,15 +221,17 @@ class UserProfiles(ResizableDialog, Ui_Dialog):
         self.feed_title.setText('')
         self.feed_url.setText('')
 
-    def options_to_profile(self):
+    def options_to_profile(self, **kw):
         classname = 'BasicUserRecipe'+str(int(time.time()))
-        title = unicode(self.profile_title.text()).strip()
+        title = kw.get('title', self.profile_title.text())
+        title = unicode(title).strip()
         if not title:
             title = classname
         self.profile_title.setText(title)
-        oldest_article = self.oldest_article.value()
-        max_articles   = self.max_articles.value()
-        feeds = [i.user_data for i in self.added_feeds.items()]
+        oldest_article = kw.get('oldest_article', self.oldest_article.value())
+        max_articles   = kw.get('max_articles', self.max_articles.value())
+        feeds = kw.get('feeds',
+                [i.user_data for i in self.added_feeds.items()])
 
         src = '''\
 class %(classname)s(%(base_class)s):
@@ -230,7 +246,6 @@ class %(classname)s(%(base_class)s):
                  max_articles=max_articles,
                  base_class='AutomaticNewsRecipe')
         return src, title
-
 
     def populate_source_code(self):
         src = self.options_to_profile().replace('BasicUserRecipe', 'AdvancedUserRecipe')
@@ -328,7 +343,6 @@ class %(classname)s(%(base_class)s):
 
         self.clear()
 
-
     def load(self):
         files = choose_files(self, 'recipe loader dialog',
             _('Choose a recipe file'),
@@ -354,6 +368,50 @@ class %(classname)s(%(base_class)s):
                 self.model.add(title, profile)
             self.clear()
 
+    def opml_import(self):
+        from calibre.gui2.dialogs.opml import ImportOPML
+        d = ImportOPML(parent=self)
+        if d.exec_() != d.Accepted:
+            return
+        oldest_article, max_articles_per_feed, replace_existing = d.oldest_article, d.articles_per_feed, d.replace_existing
+        failed_recipes, replace_recipes, add_recipes = {}, {}, {}
+
+        for group in d.recipes:
+            title = base_title = group.title or _('Unknown')
+            if not replace_existing:
+                c = 0
+                while self._model.has_title(title):
+                    c += 1
+                    title = u'%s %d' % (base_title, c)
+            src, title = self.options_to_profile(**{
+                    'title':title,
+                    'feeds':group.feeds,
+                    'oldest_article':oldest_article,
+                    'max_articles':max_articles_per_feed,
+                })
+            try:
+                compile_recipe(src)
+            except Exception:
+                import traceback
+                failed_recipes[title] = traceback.format_exc()
+                continue
+
+            if replace_existing and self._model.has_title(title):
+                replace_recipes[title] = src
+            else:
+                add_recipes[title] = src
+
+        if add_recipes:
+            self.model.add_many(add_recipes)
+        if replace_recipes:
+            self.model.replace_many_by_title(replace_recipes)
+        if failed_recipes:
+            det_msg = '\n'.join('%s\n%s\n' % (title, tb) for title, tb in failed_recipes.iteritems())
+            error_dialog(self, _('Failed to create recipes'), _(
+                'Failed to create some recipes, click "Show details" for details'), show=True,
+                         det_msg=det_msg)
+        self.clear()
+
     def populate_options(self, profile):
         self.oldest_article.setValue(profile.oldest_article)
         self.max_articles.setValue(profile.max_articles_per_feed)
@@ -364,7 +422,6 @@ class %(classname)s(%(base_class)s):
             self.added_feeds.add_item(title+' - '+url, (title, url))
         self.feed_title.setText('')
         self.feed_url.setText('')
-
 
     def clear(self):
         self.populate_options(AutomaticNewsRecipe)

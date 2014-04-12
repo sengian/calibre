@@ -8,7 +8,8 @@ __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
 import re
 
-from calibre.ebooks.docx.names import XPath, get
+from calibre.ebooks.docx.index import process_index, polish_index_markup
+from calibre.ebooks.docx.names import XPath, get, namespaces
 
 class Field(object):
 
@@ -16,16 +17,21 @@ class Field(object):
         self.start = start
         self.end = None
         self.contents = []
-        self.elements = []
-        self.instructions = []
+        self.buf = []
+        self.instructions = None
+        self.name = None
 
     def add_instr(self, elem):
         raw = elem.text
         if not raw:
             return
-        name, rest = raw.strip().partition(' ')[0::2]
-        self.instructions.append((name, rest.strip()))
-        self.elements.append(elem)
+        if self.name is None:
+            self.name, raw = raw.strip().partition(' ')[0::2]
+        self.buf.append(raw)
+
+    def finalize(self):
+        self.instructions = ''.join(self.buf)
+        del self.buf
 
 WORD, FLAG = 0, 1
 scanner = re.Scanner([
@@ -36,6 +42,9 @@ scanner = re.Scanner([
 ], flags=re.DOTALL)
 
 null = object()
+
+def WORD(x):
+    return '{%s}%s' % (namespaces['w'], x)
 
 def parser(name, field_map, default_field_name=None):
 
@@ -73,14 +82,21 @@ parse_xe = parser('xe',
 parse_index = parser('index',
     'b:bookmark c:columns-per-page d:sequence-separator e:first-page-number-separator'
     ' f:entry-type g:page-range-separator h:heading k:crossref-separator'
-    ' p:page-number-separator r:run-together y:yomi z:langcode')
+    ' l:page-number-separator p:letter-range s:sequence-name r:run-together y:yomi z:langcode')
 
 class Fields(object):
 
     def __init__(self):
         self.fields = []
+        self.index_bookmark_counter = 0
+        self.index_bookmark_prefix = 'index-'
 
     def __call__(self, doc, log):
+        all_ids = frozenset(XPath('//*/@w:id')(doc))
+        c = 0
+        while self.index_bookmark_prefix in all_ids:
+            c += 1
+            self.index_bookmark_prefix = self.index_bookmark_prefix.replace('-', '%d-' % c)
         stack = []
         for elem in XPath(
             '//*[name()="w:p" or name()="w:r" or name()="w:instrText" or (name()="w:fldChar" and (@w:fldCharType="begin" or @w:fldCharType="end"))]')(doc):
@@ -109,48 +125,71 @@ class Fields(object):
             setattr(self, '%s_fields' % f, [])
 
         for field in self.fields:
+            field.finalize()
             if field.instructions:
-                name = field.instructions[0][0]
-                func = parsers.get(name, None)
+                func = parsers.get(field.name, None)
                 if func is not None:
-                    func(field, field_parsers[name], log)
+                    func(field, field_parsers[field.name], log)
 
     def parse_hyperlink(self, field, parse_func, log):
         # Parse hyperlink fields
-        if len(field.instructions) == 1:
-            hl = parse_func(field.instructions[0][1], log)
-            if hl:
-                if 'target' in hl and hl['target'] is None:
-                    hl['target'] = '_blank'
-                all_runs = []
-                current_runs = []
-                # We only handle spans in a single paragraph
-                # being wrapped in <a>
-                for x in field.contents:
-                    if x.tag.endswith('}p'):
-                        if current_runs:
-                            all_runs.append(current_runs)
-                        current_runs = []
-                    elif x.tag.endswith('}r'):
-                        current_runs.append(x)
-                if current_runs:
-                    all_runs.append(current_runs)
-                for runs in all_runs:
-                    self.hyperlink_fields.append((hl, runs))
+        hl = parse_func(field.instructions, log)
+        if hl:
+            if 'target' in hl and hl['target'] is None:
+                hl['target'] = '_blank'
+            all_runs = []
+            current_runs = []
+            # We only handle spans in a single paragraph
+            # being wrapped in <a>
+            for x in field.contents:
+                if x.tag.endswith('}p'):
+                    if current_runs:
+                        all_runs.append(current_runs)
+                    current_runs = []
+                elif x.tag.endswith('}r'):
+                    current_runs.append(x)
+            if current_runs:
+                all_runs.append(current_runs)
+            for runs in all_runs:
+                self.hyperlink_fields.append((hl, runs))
 
     def parse_xe(self, field, parse_func, log):
         # Parse XE fields
-        xe = parse_func(field.instructions[0][1], log)  # TODO: Handle field with multiple instructions
+        if None in (field.start, field.end):
+            return
+        xe = parse_func(field.instructions, log)
         if xe:
-            # TODO: parse the field contents
+            # We insert a synthetic bookmark around this index item so that we
+            # can link to it later
+            self.index_bookmark_counter += 1
+            bmark = xe['anchor'] = '%s%d' % (self.index_bookmark_prefix, self.index_bookmark_counter)
+            p = field.start.getparent()
+            bm = p.makeelement(WORD('bookmarkStart'))
+            bm.set(WORD('id'), bmark), bm.set(WORD('name'), bmark)
+            p.insert(p.index(field.start), bm)
+            p = field.end.getparent()
+            bm = p.makeelement(WORD('bookmarkEnd'))
+            bm.set(WORD('id'), bmark)
+            p.insert(p.index(field.end) + 1, bm)
+            xe['start_elem'] = field.start
             self.xe_fields.append(xe)
 
     def parse_index(self, field, parse_func, log):
-        # Parse Index fields
-        if len(field.instructions):
-            idx = parse_func(field.instructions[0][1], log)
-            # TODO: parse the field contents
-            self.index_fields.append(idx)
+        if not field.contents:
+            return
+        idx = parse_func(field.instructions, log)
+        hyperlinks, blocks = process_index(field, idx, self.xe_fields, log)
+        for anchor, run in hyperlinks:
+            self.hyperlink_fields.append(({'anchor':anchor}, [run]))
+
+        self.index_fields.append((idx, blocks))
+
+    def polish_markup(self, object_map):
+        if not self.index_fields:
+            return
+        rmap = {v:k for k, v in object_map.iteritems()}
+        for idx, blocks in self.index_fields:
+            polish_index_markup(idx, [rmap[b] for b in blocks])
 
 def test_parse_fields():
     import unittest

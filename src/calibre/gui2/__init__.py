@@ -4,12 +4,12 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 import os, sys, Queue, threading, glob
 from threading import RLock
 from urllib import unquote
-from PyQt4.Qt import (QVariant, QFileInfo, QObject, SIGNAL, QBuffer, Qt,
+from PyQt4.Qt import (QVariant, QFileInfo, QObject, QBuffer, Qt,
                     QByteArray, QTranslator, QCoreApplication, QThread,
                     QEvent, QTimer, pyqtSignal, QDateTime, QDesktopServices,
                     QFileDialog, QFileIconProvider, QSettings, QColor,
                     QIcon, QApplication, QDialog, QUrl, QFont, QPalette,
-                    QFontDatabase)
+                    QFontDatabase, QLocale)
 
 ORG_NAME = 'KovidsBrain'
 APP_UID  = 'libprs500'
@@ -19,6 +19,7 @@ from calibre.constants import (islinux, iswindows, isbsd, isfrozen, isosx,
 from calibre.utils.config import Config, ConfigProxy, dynamic, JSONConfig
 from calibre.ebooks.metadata import MetaInformation
 from calibre.utils.date import UNDEFINED_DATE
+from calibre.utils.localization import get_lang
 
 # Setup gprefs {{{
 gprefs = JSONConfig('gui')
@@ -442,20 +443,21 @@ class GetMetadata(QObject):
     GUI thread. Must be instantiated in the GUI thread.
     '''
 
+    edispatch = pyqtSignal(object, object, object)
+    idispatch = pyqtSignal(object, object, object)
+    metadataf = pyqtSignal(object, object)
+    metadata  = pyqtSignal(object, object)
+
     def __init__(self):
         QObject.__init__(self)
-        self.connect(self, SIGNAL('edispatch(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)'),
-                     self._get_metadata, Qt.QueuedConnection)
-        self.connect(self, SIGNAL('idispatch(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)'),
-                     self._from_formats, Qt.QueuedConnection)
+        self.edispatch.connect(self._get_metadata, type=Qt.QueuedConnection)
+        self.idispatch.connect(self._from_formats, type=Qt.QueuedConnection)
 
     def __call__(self, id, *args, **kwargs):
-        self.emit(SIGNAL('edispatch(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)'),
-                  id, args, kwargs)
+        self.edispatch.emit(id, args, kwargs)
 
     def from_formats(self, id, *args, **kwargs):
-        self.emit(SIGNAL('idispatch(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)'),
-                  id, args, kwargs)
+        self.idispatch.emit(id, args, kwargs)
 
     def _from_formats(self, id, args, kwargs):
         from calibre.ebooks.metadata.meta import metadata_from_formats
@@ -463,7 +465,7 @@ class GetMetadata(QObject):
             mi = metadata_from_formats(*args, **kwargs)
         except:
             mi = MetaInformation('', [_('Unknown')])
-        self.emit(SIGNAL('metadataf(PyQt_PyObject, PyQt_PyObject)'), id, mi)
+        self.metadataf.emit(id, mi)
 
     def _get_metadata(self, id, args, kwargs):
         from calibre.ebooks.metadata.meta import get_metadata
@@ -471,7 +473,7 @@ class GetMetadata(QObject):
             mi = get_metadata(*args, **kwargs)
         except:
             mi = MetaInformation('', [_('Unknown')])
-        self.emit(SIGNAL('metadata(PyQt_PyObject, PyQt_PyObject)'), id, mi)
+        self.metadata.emit(id, mi)
 
 class FileIconProvider(QFileIconProvider):
 
@@ -523,6 +525,7 @@ class FileIconProvider(QFileIconProvider):
              'xps'     : 'xps',
              'oxps'    : 'xps',
              'docx'    : 'docx',
+             'opml'    : 'opml',
              }
 
     def __init__(self):
@@ -872,6 +875,9 @@ class Application(QApplication):
         if DEBUG:
             self.redirect_notify = True
         QApplication.__init__(self, qargs)
+        dl = QLocale(get_lang())
+        if unicode(dl.bcp47Name()) != u'C':
+            QLocale.setDefault(dl)
         global gui_thread, qt_app
         gui_thread = QThread.currentThread()
         self._translator = None
@@ -1113,7 +1119,7 @@ def find_forms(srcdir):
 def form_to_compiled_form(form):
     return form.rpartition('.')[0]+'_ui.py'
 
-def build_forms(srcdir, info=None):
+def build_forms(srcdir, info=None, summary=False):
     import re, cStringIO
     from PyQt4.uic import compileUi
     forms = find_forms(srcdir)
@@ -1125,28 +1131,29 @@ def build_forms(srcdir, info=None):
         ans = 'I(%s%s%s)'%(match.group(1), match.group(2), match.group(1))
         return ans
 
+    num = 0
     for form in forms:
         compiled_form = form_to_compiled_form(form)
         if not os.path.exists(compiled_form) or os.stat(form).st_mtime > os.stat(compiled_form).st_mtime:
-            info('\tCompiling form', form)
+            if not summary:
+                info('\tCompiling form', form)
             buf = cStringIO.StringIO()
             compileUi(form, buf)
             dat = buf.getvalue()
-            dat = dat.replace('__appname__', 'calibre')
             dat = dat.replace('import images_rc', '')
-            dat = dat.replace('from library import', 'from calibre.gui2.library import')
-            dat = dat.replace('from widgets import', 'from calibre.gui2.widgets import')
-            dat = dat.replace('from convert.xpath_wizard import',
-                'from calibre.gui2.convert.xpath_wizard import')
             dat = re.sub(r'^ {4}def _translate\(context, text, disambig\):\s+return.*$', '    pass', dat,
                          flags=re.M)
             dat = re.compile(r'(?:QtGui.QApplication.translate|(?<!def )_translate)\(.+?,\s+"(.+?)(?<!\\)",.+?\)', re.DOTALL).sub(r'_("\1")', dat)
             dat = dat.replace('_("MMM yyyy")', '"MMM yyyy"')
+            dat = dat.replace('_("d MMM yyyy")', '"d MMM yyyy"')
             dat = pat.sub(sub, dat)
             dat = dat.replace('from QtWebKit.QWebView import QWebView',
                     'from PyQt4 import QtWebKit\nfrom PyQt4.QtWebKit import QWebView')
 
             open(compiled_form, 'wb').write(dat)
+            num += 1
+    if num:
+        info('Compiled %d forms' % num)
 
 _df = os.environ.get('CALIBRE_DEVELOP_FROM', None)
 if _df and os.path.exists(_df):

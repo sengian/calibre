@@ -39,7 +39,7 @@ from calibre.gui2.tweak_book.preferences import Preferences
 from calibre.gui2.tweak_book.search import validate_search_request, run_search
 from calibre.gui2.tweak_book.widgets import (
     RationalizeFolders, MultiSplit, ImportForeign, QuickOpen, InsertLink,
-    InsertSemantics, BusyCursor)
+    InsertSemantics, BusyCursor, InsertTag)
 
 _diff_dialogs = []
 
@@ -403,7 +403,8 @@ class Boss(QObject):
             except:
                 self.rewind_savepoint()
                 raise
-            self.apply_container_update_to_gui()
+            if changed:
+                self.apply_container_update_to_gui()
             from calibre.ebooks.markdown import markdown
             report = markdown('# %s\n\n'%self.current_metadata.title + '\n\n'.join(report), output_format='html4')
         if not changed:
@@ -642,6 +643,10 @@ class Boss(QObject):
                 d = InsertLink(current_container(), edname, initial_text=ed.get_smart_selection(), parent=self.gui)
                 if d.exec_() == d.Accepted:
                     ed.insert_hyperlink(d.href, d.text)
+            elif action[0] == 'insert_tag':
+                d = InsertTag(parent=self.gui)
+                if d.exec_() == d.Accepted:
+                    ed.insert_tag(d.tag)
             else:
                 ed.action_triggered(action)
 

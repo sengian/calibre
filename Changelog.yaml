@@ -20,6 +20,91 @@
 #   new recipes:
 #     - title: 
 
+- version: 1.32.0
+  date: 2014-04-11
+
+  new features:
+    - title: "Fetch news: Allow automatically creating custom news sources by importing OPML files. Many RSS news reader programs can export their list of RSS feeds in the OPML format."
+
+    - title: "Conversion: When inserting metadata as a jacket page, alter the font sizes in the jacket so that the sizes match the sizes used in the rest of the book. Also pretty print the generated jacket HTML."
+
+    - title: "Allow searching for books by id and uuid using the id: and uuid: prefixes"
+
+    - title: "Allow specifying arbitrary colors for column coloring rules"
+
+  bug fixes:
+    - title: "Update the version of openssl shipped in the binary builds (the version in the windows 64bit build was vulnerable to the Heartbleed bug)"
+
+    - title: "Edit Book: Fix book being marked as modified even when no actual changes were done by various automated tools such as Smarten Punctuation, Subset Fonts, etc."
+
+    - title: "Fix ebook-device cp -f failing when destination file already exists"
+      tickets: [1303181] 
+
+    - title: "Ensure that the rendered dates in the book list and edit metadata dialogs are always in the same language as the calibre interface, regardless of system language setting"
+
+    - title: "Edit metadata dialog: Remember window size for the cover download window"
+
+    - title: "DOCX Input: Dont fail on DOCX files that contain pages with zero effective width."
+      tickets: [1303022]
+
+    - title: "Content server: Fix page not found error when clicking on a category that has only a single item in it"
+
+    - title: "Send books to the Books folder for the Tolino Vision, as it cannot find books placed outside this folder"
+
+    - title: "Edit book: Fix error when beautifying HTML files that contain un-indented <script> or <style> tags"
+
+  improved recipes:
+    - Ekantipur
+    - NRC Handelsblad
+    - Frontline
+
+- version: 1.31.0
+  date: 2014-04-04
+
+  new features:
+    - title: "DOCX Input: Support for converting indexes created using the Word Index tool. The entries in the index are automatically converted into links pointing to the indexed locations."
+
+    - title: "AZW3 Output: Add support for converting documents with very large table of contents (with more than 2000 entries)."
+      tickets: [1250475]
+
+    - title: "Edit Book: Add a button to easily insert HTML tags. Useful if you want to quickly surround selected text with an arbitrary tag. You can right click the button to get a list of recently used tags."
+
+    - title: "Driver for Tolino Vision (OS X/Linux only)."
+      tickets: [1301875]
+
+    - title: "Edit book: Allow editing SVG files as raw XML"
+
+  bug fixes:
+    - title: "DOCX Input: Fix incorrect numbering being generated for numbered lists in some circumstances."
+      tickets: [1301044]
+
+    - title: "calibredb check_library: Do not create empty library if user specifies incorrect path"
+
+    - title: "DOCX Input: Fix handling of hyperlinks in documents where the hyperlink is specified as a field internally (Microsoft Word does not use fields for hyperlinks)"
+
+    - title: "Get Books: Update WH Smiths plugin for website changes and remove Diesel eBooks, as they are shutting down"
+
+    - title: "AZW3 Output: Fix a bug that caused popup footnotes in some AZW3 files to not work properly. The popup would show all remaining footnotes instead of only the current footnote."
+      tickets: [1293290]
+
+    - title: "AZW3 Output: Various tweaks to the internal structure and headers of the output file to make it closer to what kindlegen 2.9 generates"
+
+    - title: "Edit Book: When user is editing files belonging to another user account on linux/os x rather than erroring out when saving, change the ownership of the file to the editing user."
+      tickets: [1299097]
+
+    - title: "Edit Book: Fix insert Inline ToC creating non-linear jumps in class names"
+
+    - title: "Fix regression that broke ebook-device cp"
+
+  improved recipes:
+    - CNET
+    - El Pais Impreso
+    - CNet News
+    - Antyweb
+
+  new recipes:
+    - title: 
+
 - version: 1.30.0
   date: 2014-03-28
 

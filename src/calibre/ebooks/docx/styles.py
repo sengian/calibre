@@ -262,6 +262,9 @@ class Styles(object):
                 if num_id is not None:
                     p.set('calibre_num_id', '%s:%s' % (lvl, num_id))
                 is_numbering = True
+                ps = self.numbering.get_para_style(num_id, lvl)
+                if ps is not None:
+                    parent_styles.append(ps)
 
             for attr in ans.all_properties:
                 if not (is_numbering and attr == 'text_indent'):  # skip text-indent for lists
@@ -464,6 +467,10 @@ class Styles(object):
             dl.notes dd:last-of-type { page-break-after: avoid }
 
             span.tab { white-space: pre }
+
+            p.index-entry { text-indent: 0pt; }
+            p.index-entry a:visited { color: blue }
+            p.index-entry a:hover { color: red }
 
             ''') % (self.body_font_family, self.body_font_size, self.body_color)
         if ef:
