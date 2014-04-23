@@ -10,6 +10,8 @@ import string
 from future_builtins import map
 
 from calibre.utils.config import JSONConfig
+from calibre.spell.dictionary import Dictionaries, parse_lang_code
+
 tprefs = JSONConfig('tweak_book_gui')
 d = tprefs.defaults
 
@@ -43,6 +45,7 @@ d['pretty_print_on_open'] = False
 d['disable_completion_popup_for_search'] = False
 d['saved_searches'] = []
 d['insert_tag_mru'] = ['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'td', 'tr']
+d['spell_check_case_sensitive_sort'] = False
 
 del d
 
@@ -69,3 +72,13 @@ class NonReplaceDict(dict):
 actions = NonReplaceDict()
 editors = NonReplaceDict()
 TOP = object()
+dictionaries = Dictionaries()
+
+def set_book_locale(lang):
+    dictionaries.initialize()
+    try:
+        dictionaries.default_locale = parse_lang_code(lang)
+        if dictionaries.default_locale.langcode == 'und':
+            raise ValueError('')
+    except ValueError:
+        dictionaries.default_locale = dictionaries.ui_locale

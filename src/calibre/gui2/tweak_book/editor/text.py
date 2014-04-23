@@ -25,7 +25,8 @@ from calibre.gui2.tweak_book.editor.syntax.html import HTMLHighlighter, XMLHighl
 from calibre.gui2.tweak_book.editor.syntax.css import CSSHighlighter
 from calibre.gui2.tweak_book.editor.smart import NullSmarts
 from calibre.gui2.tweak_book.editor.smart.html import HTMLSmarts
-from calibre.utils.icu import safe_chr
+from calibre.spell.break_iterator import index_of
+from calibre.utils.icu import safe_chr, string_length
 
 PARAGRAPH_SEPARATOR = '\u2029'
 entity_pat = re.compile(r'&(#{0,1}[a-zA-Z0-9]{1,8});')
@@ -156,7 +157,7 @@ class TextEdit(PlainTextEdit):
     def sizeHint(self):
         return self.size_hint
 
-    def apply_settings(self, prefs=None):  # {{{
+    def apply_settings(self, prefs=None, dictionaries_changed=False):  # {{{
         prefs = prefs or tprefs
         self.setLineWrapMode(QPlainTextEdit.WidgetWidth if prefs['editor_line_wrap'] else QPlainTextEdit.NoWrap)
         theme = THEMES.get(prefs['editor_theme'], None)
@@ -166,6 +167,8 @@ class TextEdit(PlainTextEdit):
         w = self.fontMetrics()
         self.space_width = w.width(' ')
         self.setTabStopWidth(prefs['editor_tab_stop_width'] * self.space_width)
+        if dictionaries_changed:
+            self.highlighter.rehighlight()
 
     def apply_theme(self, theme):
         self.theme = theme
@@ -374,6 +377,37 @@ class TextEdit(PlainTextEdit):
         if save_match is not None:
             self.saved_matches[save_match] = (pat, m)
         return True
+
+    def find_spell_word(self, original_words, lang, from_cursor=True):
+        c = self.textCursor()
+        c.setPosition(c.position())
+        if not from_cursor:
+            c.movePosition(c.Start)
+        c.movePosition(c.End, c.KeepAnchor)
+
+        def find_first_word(haystack):
+            match_pos, match_word = -1, None
+            for w in original_words:
+                idx = index_of(w, haystack, lang=lang)
+                if idx > -1 and (match_pos == -1 or match_pos > idx):
+                    match_pos, match_word = idx, w
+            return match_pos, match_word
+
+        while True:
+            text = unicode(c.selectedText()).rstrip('\0')
+            idx, word = find_first_word(text)
+            if idx == -1:
+                return False
+            c.setPosition(c.anchor() + idx)
+            c.setPosition(c.position() + string_length(word), c.KeepAnchor)
+            if self.smarts.verify_for_spellcheck(c, self.highlighter):
+                self.setTextCursor(c)
+                self.centerCursor()
+                return True
+            c.setPosition(c.position())
+            c.movePosition(c.End, c.KeepAnchor)
+
+        return False
 
     def replace(self, pat, template, saved_match='gui'):
         c = self.textCursor()

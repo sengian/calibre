@@ -12,7 +12,7 @@ import sys
 is_narrow_build = sys.maxunicode < 0x10ffff
 
 # Setup code {{{
-import sys
+import codecs
 
 from calibre.constants import plugins
 from calibre.utils.config_base import tweaks
@@ -30,23 +30,26 @@ del err
 icu_unicode_version = getattr(_icu, 'unicode_version', None)
 _nmodes = {m:getattr(_icu, 'UNORM_'+m, None) for m in ('NFC', 'NFD', 'NFKC', 'NFKD', 'NONE', 'DEFAULT', 'FCD')}
 
+# Ensure that the python internal filesystem and default encodings are not ASCII
+def is_ascii(name):
+    try:
+        return codecs.lookup(name).name == b'ascii'
+    except (TypeError, LookupError):
+        return True
 try:
-    senc = sys.getdefaultencoding()
-    if not senc or senc.lower() == b'ascii':
+    if is_ascii(sys.getdefaultencoding()):
         _icu.set_default_encoding(b'utf-8')
-    del senc
 except:
     import traceback
     traceback.print_exc()
 
 try:
-    fenc = sys.getfilesystemencoding()
-    if not fenc or fenc.lower() == b'ascii':
+    if is_ascii(sys.getfilesystemencoding()):
         _icu.set_filesystem_encoding(b'utf-8')
-    del fenc
 except:
     import traceback
     traceback.print_exc()
+del is_ascii
 
 def collator():
     global _collator, _locale
@@ -274,6 +277,12 @@ def partition_by_first_letter(items, reverse=False, key=lambda x:x):
         except KeyError:
             ans[last_c] = [item]
     return ans
+
+# Return the number of unicode codepoints in a string
+try:
+    string_length = _icu.string_length if is_narrow_build else len
+except AttributeError:
+    string_length = len  # Somebody running from source with a binary that has not been updated
 
 ################################################################################
 

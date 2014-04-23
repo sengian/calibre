@@ -27,7 +27,8 @@ from calibre.ebooks.oeb.polish.toc import remove_names_from_toc, find_existing_t
 from calibre.ebooks.oeb.polish.utils import link_stylesheets, setup_cssutils_serialization as scs
 from calibre.gui2 import error_dialog, choose_files, question_dialog, info_dialog, choose_save_file
 from calibre.gui2.dialogs.confirm_delete import confirm
-from calibre.gui2.tweak_book import set_current_container, current_container, tprefs, actions, editors
+from calibre.gui2.tweak_book import (
+    set_current_container, current_container, tprefs, actions, editors, set_book_locale, dictionaries)
 from calibre.gui2.tweak_book.undo import GlobalUndoHistory
 from calibre.gui2.tweak_book.file_list import NewFileDialog
 from calibre.gui2.tweak_book.save import SaveManager, save_container, find_first_existing_ancestor
@@ -37,6 +38,7 @@ from calibre.gui2.tweak_book.editor import editor_from_syntax, syntax_from_mime
 from calibre.gui2.tweak_book.editor.insert_resource import get_resource_data, NewBook
 from calibre.gui2.tweak_book.preferences import Preferences
 from calibre.gui2.tweak_book.search import validate_search_request, run_search
+from calibre.gui2.tweak_book.spell import find_next as find_next_word
 from calibre.gui2.tweak_book.widgets import (
     RationalizeFolders, MultiSplit, ImportForeign, QuickOpen, InsertLink,
     InsertSemantics, BusyCursor, InsertTag)
@@ -109,14 +111,22 @@ class Boss(QObject):
         self.gui.saved_searches.run_saved_searches.connect(self.run_saved_searches)
         self.gui.central.search_panel.save_search.connect(self.save_search)
         self.gui.central.search_panel.show_saved_searches.connect(self.show_saved_searches)
+        self.gui.spell_check.find_word.connect(self.find_word)
+        self.gui.spell_check.refresh_requested.connect(self.commit_all_editors_to_container)
+        self.gui.spell_check.word_replaced.connect(self.word_replaced)
 
     def preferences(self):
         p = Preferences(self.gui)
-        if p.exec_() == p.Accepted:
-            for ed in editors.itervalues():
-                ed.apply_settings()
+        ret = p.exec_()
+        if p.dictionaries_changed:
+            dictionaries.clear_caches()
+            dictionaries.initialize(force=True)  # Reread user dictionaries
+        if ret == p.Accepted:
             setup_cssutils_serialization()
             self.gui.apply_settings()
+        if ret == p.Accepted or p.dictionaries_changed:
+            for ed in editors.itervalues():
+                ed.apply_settings(dictionaries_changed=p.dictionaries_changed)
 
     def mark_requested(self, name, action):
         self.commit_dirty_opf()
@@ -229,11 +239,13 @@ class Boss(QObject):
                                 det_msg=job.traceback, show=True)
         if cn:
             self.save_manager.clear_notify_data()
+        dictionaries.clear_ignored(), dictionaries.clear_caches()
         parse_worker.clear()
         container = job.result
         set_current_container(container)
         with BusyCursor():
             self.current_metadata = self.gui.current_metadata = container.mi
+            set_book_locale(self.current_metadata.language)
             self.global_undo.open_book(container)
             self.gui.update_window_title()
             self.gui.file_list.current_edited_name = None
@@ -691,6 +703,20 @@ class Boss(QObject):
         run_search(state, action, ed, name, searchable_names,
                    self.gui, self.show_editor, self.edit_file, self.show_current_diff, self.add_savepoint, self.rewind_savepoint, self.set_modified)
 
+    def find_word(self, word, locations):
+        ' Go to a word from the spell check dialog '
+        ed = self.gui.central.current_editor
+        name = None
+        for n, x in editors.iteritems():
+            if x is ed:
+                name = n
+                break
+        find_next_word(word, locations, ed, name, self.gui, self.show_editor, self.edit_file)
+
+    def word_replaced(self, changed_names):
+        self.set_modified()
+        self.update_editors_from_container(names=set(changed_names))
+
     def saved_searches(self):
         self.gui.saved_searches.show(), self.gui.saved_searches.raise_()
 
@@ -729,6 +755,7 @@ class Boss(QObject):
             f.write(ed.data)
         if name == container.opf_name:
             container.refresh_mime_map()
+            set_book_locale(container.mi.language)
         if container is current_container():
             ed.is_synced_to_container = True
             if name == container.opf_name:
@@ -899,6 +926,12 @@ class Boss(QObject):
         c.parent().raise_()
         c.run_checks(current_container())
 
+    def spell_check_requested(self):
+        if current_container() is None:
+            return
+        self.commit_all_editors_to_container()
+        self.gui.spell_check.show()
+
     @in_thread_job
     def fix_requested(self, errors):
         self.add_savepoint(_('Before: Auto-fix errors'))
@@ -990,9 +1023,10 @@ class Boss(QObject):
         editor.modification_state_changed.connect(self.editor_modification_state_changed)
         self.gui.central.add_editor(name, editor)
 
-    def edit_file(self, name, syntax, use_template=None):
+    def edit_file(self, name, syntax=None, use_template=None):
         editor = editors.get(name, None)
         if editor is None:
+            syntax = syntax or syntax_from_mime(name, guess_type(name))
             if use_template is None:
                 data = current_container().raw_data(name)
                 if isbytestring(data) and syntax in {'html', 'css', 'text', 'xml'}:

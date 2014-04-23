@@ -23,7 +23,7 @@ def available_translations():
     return _available_translations
 
 def get_system_locale():
-    from calibre.constants import iswindows
+    from calibre.constants import iswindows, isosx, plugins
     lang = None
     if iswindows:
         try:
@@ -34,6 +34,13 @@ def get_system_locale():
                 lang = None
         except:
             pass  # Windows XP does not have the GetUserDefaultLocaleName fn
+    elif isosx:
+        try:
+            lang = plugins['usbobserver'][0].user_locale() or None
+        except:
+            # Fallback to environment vars if something bad happened
+            import traceback
+            traceback.print_exc()
     if lang is None:
         try:
             lang = locale.getdefaultlocale(['LANGUAGE', 'LC_ALL', 'LC_CTYPE',
@@ -180,6 +187,7 @@ _extra_lang_codes = {
         'zh_HK' : _('Chinese (HK)'),
         'zh_TW' : _('Traditional Chinese'),
         'en'    : _('English'),
+        'en_US' : _('English (United States)'),
         'en_AR' : _('English (Argentina)'),
         'en_AU' : _('English (Australia)'),
         'en_JP' : _('English (Japan)'),
