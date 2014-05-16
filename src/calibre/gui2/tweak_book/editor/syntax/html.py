@@ -13,7 +13,10 @@ from collections import namedtuple
 from PyQt4.Qt import QFont, QTextBlockUserData
 
 from calibre.ebooks.oeb.polish.spell import html_spell_tags, xml_spell_tags
-from calibre.gui2.tweak_book.editor import SyntaxTextCharFormat
+from calibre.spell.dictionary import parse_lang_code
+from calibre.spell.break_iterator import split_into_words_and_positions
+from calibre.gui2.tweak_book import dictionaries, tprefs
+from calibre.gui2.tweak_book.editor import SyntaxTextCharFormat, SPELL_PROPERTY
 from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter, run_loop
 from calibre.gui2.tweak_book.editor.syntax.css import (
     create_formats as create_css_formats, state_map as css_state_map, CSSState, CSSUserData)
@@ -169,6 +172,16 @@ class HTMLUserData(QTextBlockUserData):
         self.tags, self.attributes = [], []
         self.state = State() if state is None else state
 
+    @classmethod
+    def tag_ok_for_spell(cls, name):
+        return name not in html_spell_tags
+
+class XMLUserData(HTMLUserData):
+
+    @classmethod
+    def tag_ok_for_spell(cls, name):
+        return name in xml_spell_tags
+
 def add_tag_data(user_data, tag):
     user_data.tags.append(tag)
 
@@ -210,7 +223,7 @@ def cdata(state, text, i, formats, user_data):
     add_tag_data(user_data, TagStart(m.start(), '', name, True, True))
     return [(num, fmt), (2, formats['end_tag']), (len(m.group()) - 2, formats['tag_name'])]
 
-def mark_nbsp(state, text, nbsp_format):
+def process_text(state, text, nbsp_format, spell_format, user_data):
     ans = []
     fmt = None
     if state.is_bold or state.is_italic:
@@ -225,6 +238,36 @@ def mark_nbsp(state, text, nbsp_format):
         last = m.end()
     if not ans:
         ans = [(len(text), fmt)]
+
+    if tprefs['inline_spell_check'] and state.tags and user_data.tag_ok_for_spell(state.tags[-1].name):
+        split_ans = []
+        locale = state.current_lang or dictionaries.default_locale
+        sfmt = SyntaxTextCharFormat(spell_format)
+        if fmt is not None:
+            sfmt.merge(fmt)
+
+        tpos = 0
+        for tlen, fmt in ans:
+            if fmt is nbsp_format:
+                split_ans.append((tlen, fmt))
+            else:
+                ctext = text[tpos:tpos+tlen]
+                ppos = 0
+                for start, length in split_into_words_and_positions(ctext, lang=locale.langcode):
+                    if start > ppos:
+                        split_ans.append((start - ppos, fmt))
+                    ppos = start + length
+                    recognized = dictionaries.recognized(ctext[start:ppos], locale)
+                    if not recognized:
+                        wsfmt = SyntaxTextCharFormat(sfmt)
+                        wsfmt.setProperty(SPELL_PROPERTY, (ctext[start:ppos], locale))
+                    split_ans.append((length, fmt if recognized else wsfmt))
+                if ppos == 0:
+                    split_ans.append((tlen, fmt))
+
+            tpos += tlen
+        ans = split_ans
+
     return ans
 
 def normal(state, text, i, formats, user_data):
@@ -276,7 +319,7 @@ def normal(state, text, i, formats, user_data):
         return [(1, formats['>'])]
 
     t = normal_pat.search(text, i).group()
-    return mark_nbsp(state, t, formats['nbsp'])
+    return process_text(state, t, formats['nbsp'], formats['spell'], user_data)
 
 def opening_tag(cdata_tags, state, text, i, formats, user_data):
     'An opening tag, like <a>'
@@ -318,6 +361,7 @@ def attribute_name(state, text, i, formats, user_data):
         return [(1, formats['attr'])]
     # Standalone attribute with no value
     state.parse = IN_OPENING_TAG
+    state.attribute_name = None
     return [(0, None)]
 
 def attribute_value(state, text, i, formats, user_data):
@@ -329,6 +373,7 @@ def attribute_value(state, text, i, formats, user_data):
         state.parse = SQ_VAL if ch == "'" else DQ_VAL
         return [(1, formats['string'])]
     state.parse = IN_OPENING_TAG
+    state.attribute_name = None
     m = unquoted_val_pat.match(text, i)
     if m is None:
         return [(1, formats['no-attr-value'])]
@@ -344,6 +389,11 @@ def quoted_val(state, text, i, formats, user_data):
     else:
         num = pos - i + 1
         state.parse = IN_OPENING_TAG
+        if state.tag_being_defined is not None and state.attribute_name in ('lang', 'xml:lang'):
+            try:
+                state.tag_being_defined.lang = parse_lang_code(text[i:pos])
+            except ValueError:
+                pass
         add_attr_data(user_data, ATTR_VALUE, ATTR_END, i + num)
     return [(num, formats['string'])]
 
@@ -409,6 +459,7 @@ def create_formats(highlighter, add_css=True):
         'nsprefix': t['Constant'],
         'preproc': t['PreProc'],
         'nbsp': t['SpecialCharacter'],
+        'spell': t['SpellError'],
     }
     for name, msg in {
             '<': _('An unescaped < is not allowed. Replace it with &lt;'),
@@ -437,18 +488,19 @@ class HTMLHighlighter(SyntaxHighlighter):
     user_data_factory = HTMLUserData
 
     def tag_ok_for_spell(self, name):
-        return name not in html_spell_tags
+        return HTMLUserData.tag_ok_for_spell(name)
 
 class XMLHighlighter(HTMLHighlighter):
 
     state_map = xml_state_map
     spell_attributes = ('opf:file-as',)
+    user_data_factory = XMLUserData
 
     def create_formats_func(self):
         return create_formats(self, add_css=False)
 
     def tag_ok_for_spell(self, name):
-        return name in xml_spell_tags
+        return XMLUserData.tag_ok_for_spell(name)
 
 if __name__ == '__main__':
     from calibre.gui2.tweak_book.editor.widget import launch_editor
@@ -468,9 +520,9 @@ if __name__ == '__main__':
         </style>
         <style type="text/css">p.small { font-size: x-small; color:gray }</style>
     </head id="invalid attribute on closing tag">
-    <body><p:
+    <body lang="en_IN"><p:
         <!-- The start of the actual body text -->
-        <h1>A heading that should appear in bold, with an <i>italic</i> word</h1>
+        <h1 lang="en_US">A heading that should appear in bold, with an <i>italic</i> word</h1>
         <p>Some text with inline formatting, that is syntax highlighted. A <b>bold</b> word, and an <em>italic</em> word. \
 <i>Some italic text with a <b>bold-italic</b> word in </i>the middle.</p>
         <!-- Let's see what exotic constructs like namespace prefixes and empty attributes look like -->
@@ -478,6 +530,7 @@ if __name__ == '__main__':
         <input disabled><input disabled /><span attr=<></span>
         <!-- Non-breaking spaces are rendered differently from normal spaces, so that they stand out -->
         <p>Some\xa0words\xa0separated\xa0by\xa0non\u2011breaking\xa0spaces and non\u2011breaking hyphens.</p>
+        <p>Some non-BMP unicode text:\U0001f431\U0001f431\U0001f431</p>
     </body>
 </html>
 ''', path_is_raw=True)

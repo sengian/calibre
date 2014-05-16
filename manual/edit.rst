@@ -386,6 +386,13 @@ broken HTML/CSS. Therefore, if you dont want any auto-fixing to be performed,
 first use the Check Book tool to correct all problems and only then run
 beautify.  Accessed via :guilabel:`Tools->Beautify all files`.
 
+.. note::
+    In HTML any text can have significant whitespace, via the CSS white-space
+    directive. Therefor, beautification could potentially change the rendering
+    of the HTML. To avoid this, as much as possible, the beautify algorithm
+    only beautifies block level tags that contain other block level tags. So,
+    for example, text inside a <p> tag will not have its whitespace changed.
+
 
 Insert inline Table of Contents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -399,6 +406,17 @@ generated based on the currently defined Table of Contents.
 If you use this tool multiple times, each invocation will cause the previously
 created inline Table of Contents to be replaced. The tool can be accessed via
 :guilabel:`Tools->Table of Contents->Insert inline Table of Contents`.
+
+Filter style information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This tool can be used to easily remove specified CSS style properties from the
+entire book. You can tell it what properties you want removed, for example,
+``color, background-color, line-height`` and it will remove them from
+everywhere they occur --- stylesheets, ``<style>`` tags and inline ``style``
+attributes. After removing the style information, a summary of all the changes
+made is displayed so you can see exactly what was changed. The tool can be
+accessed via :guilabel:`Tools->Filter style information`.
 
 .. _checkpoints:
 
@@ -551,7 +569,7 @@ Adding new dictionaries
 ###########################
 
 The spelling checker comes with builtin dictionaries for the English and
-Spansih languages. You can install your own dictionaries via
+Spanish languages. You can install your own dictionaries via
 :guilabel:`Preferences->Editor->Manage spelling dictionaries`. The spell
 checker can use dictionaries from the OpenOffice program (in the .oxt
 format). You can download these dictionaries from

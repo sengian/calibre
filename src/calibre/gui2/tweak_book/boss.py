@@ -18,8 +18,9 @@ from calibre import prints, isbytestring
 from calibre.ptempfile import PersistentTemporaryDirectory, TemporaryDirectory
 from calibre.ebooks.oeb.base import urlnormalize
 from calibre.ebooks.oeb.polish.main import SUPPORTED, tweak_polish
-from calibre.ebooks.oeb.polish.container import get_container as _gc, clone_container, guess_type, OEB_FONTS
+from calibre.ebooks.oeb.polish.container import get_container as _gc, clone_container, guess_type, OEB_FONTS, OEB_DOCS, OEB_STYLES
 from calibre.ebooks.oeb.polish.cover import mark_as_cover, mark_as_titlepage
+from calibre.ebooks.oeb.polish.css import filter_css
 from calibre.ebooks.oeb.polish.pretty import fix_all_html, pretty_all
 from calibre.ebooks.oeb.polish.replace import rename_files, replace_file, get_recommended_folders, rationalize_folders
 from calibre.ebooks.oeb.polish.split import split, merge, AbortError, multisplit
@@ -28,7 +29,8 @@ from calibre.ebooks.oeb.polish.utils import link_stylesheets, setup_cssutils_ser
 from calibre.gui2 import error_dialog, choose_files, question_dialog, info_dialog, choose_save_file
 from calibre.gui2.dialogs.confirm_delete import confirm
 from calibre.gui2.tweak_book import (
-    set_current_container, current_container, tprefs, actions, editors, set_book_locale, dictionaries)
+    set_current_container, current_container, tprefs, actions, editors,
+    set_book_locale, dictionaries, editor_name)
 from calibre.gui2.tweak_book.undo import GlobalUndoHistory
 from calibre.gui2.tweak_book.file_list import NewFileDialog
 from calibre.gui2.tweak_book.save import SaveManager, save_container, find_first_existing_ancestor
@@ -38,10 +40,10 @@ from calibre.gui2.tweak_book.editor import editor_from_syntax, syntax_from_mime
 from calibre.gui2.tweak_book.editor.insert_resource import get_resource_data, NewBook
 from calibre.gui2.tweak_book.preferences import Preferences
 from calibre.gui2.tweak_book.search import validate_search_request, run_search
-from calibre.gui2.tweak_book.spell import find_next as find_next_word
+from calibre.gui2.tweak_book.spell import find_next as find_next_word, find_next_error
 from calibre.gui2.tweak_book.widgets import (
     RationalizeFolders, MultiSplit, ImportForeign, QuickOpen, InsertLink,
-    InsertSemantics, BusyCursor, InsertTag)
+    InsertSemantics, BusyCursor, InsertTag, FilterCSS)
 
 _diff_dialogs = []
 
@@ -105,6 +107,7 @@ class Boss(QObject):
         self.gui.check_book.check_requested.connect(self.check_requested)
         self.gui.check_book.fix_requested.connect(self.fix_requested)
         self.gui.toc_view.navigate_requested.connect(self.link_clicked)
+        self.gui.toc_view.refresh_requested.connect(self.commit_all_editors_to_container)
         self.gui.image_browser.image_activated.connect(self.image_activated)
         self.gui.checkpoints.revert_requested.connect(self.revert_requested)
         self.gui.checkpoints.compare_requested.connect(self.compare_requested)
@@ -114,10 +117,12 @@ class Boss(QObject):
         self.gui.spell_check.find_word.connect(self.find_word)
         self.gui.spell_check.refresh_requested.connect(self.commit_all_editors_to_container)
         self.gui.spell_check.word_replaced.connect(self.word_replaced)
+        self.gui.spell_check.word_ignored.connect(self.word_ignored)
 
     def preferences(self):
         p = Preferences(self.gui)
         ret = p.exec_()
+        orig_spell = tprefs['inline_spell_check']
         if p.dictionaries_changed:
             dictionaries.clear_caches()
             dictionaries.initialize(force=True)  # Reread user dictionaries
@@ -127,6 +132,12 @@ class Boss(QObject):
         if ret == p.Accepted or p.dictionaries_changed:
             for ed in editors.itervalues():
                 ed.apply_settings(dictionaries_changed=p.dictionaries_changed)
+        if orig_spell != tprefs['inline_spell_check']:
+            for ed in editors.itervalues():
+                try:
+                    ed.editor.highlighter.rehighlight()
+                except AttributeError:
+                    pass
 
     def mark_requested(self, name, action):
         self.commit_dirty_opf()
@@ -608,10 +619,7 @@ class Boss(QObject):
     def pretty_print(self, current):
         if current:
             ed = self.gui.central.current_editor
-            for name, x in editors.iteritems():
-                if x is ed:
-                    break
-            ed.pretty_print(name)
+            ed.pretty_print(editor_name(ed))
         else:
             with BusyCursor():
                 self.add_savepoint(_('Before: Beautify files'))
@@ -628,10 +636,7 @@ class Boss(QObject):
 
     def editor_action(self, action):
         ed = self.gui.central.current_editor
-        for n, x in editors.iteritems():
-            if x is ed:
-                edname = n
-                break
+        edname = editor_name(ed)
         if hasattr(ed, 'action_triggered'):
             if action and action[0] == 'insert_resource':
                 rtype = action[1]
@@ -674,6 +679,26 @@ class Boss(QObject):
             d.apply_changes(current_container())
             self.apply_container_update_to_gui()
 
+    def filter_css(self):
+        self.commit_all_editors_to_container()
+        c = current_container()
+        ed = self.gui.central.current_editor
+        current_name = editor_name(ed)
+        if current_name and c.mime_map[current_name] not in OEB_DOCS | OEB_STYLES:
+            current_name = None
+        d = FilterCSS(current_name=current_name, parent=self.gui)
+        if d.exec_() == d.Accepted and d.filtered_properties:
+            self.add_savepoint(_('Before: Filter style information'))
+            with BusyCursor():
+                changed = filter_css(current_container(), d.filtered_properties, names=d.filter_names)
+            if changed:
+                self.apply_container_update_to_gui()
+                self.show_current_diff()
+            else:
+                self.rewind_savepoint()
+                return info_dialog(self.gui, _('No matches'), _(
+                    'No matching style rules were found'), show=True)
+
     def show_find(self):
         self.gui.central.show_find()
         ed = self.gui.central.current_editor
@@ -688,11 +713,7 @@ class Boss(QObject):
         # Ensure the search panel is visible
         sp.setVisible(True)
         ed = self.gui.central.current_editor
-        name = None
-        for n, x in editors.iteritems():
-            if x is ed:
-                name = n
-                break
+        name = editor_name(ed)
         state = sp.state
         if overrides:
             state.update(overrides)
@@ -706,16 +727,26 @@ class Boss(QObject):
     def find_word(self, word, locations):
         ' Go to a word from the spell check dialog '
         ed = self.gui.central.current_editor
-        name = None
-        for n, x in editors.iteritems():
-            if x is ed:
-                name = n
-                break
+        name = editor_name(ed)
         find_next_word(word, locations, ed, name, self.gui, self.show_editor, self.edit_file)
+
+    def next_spell_error(self):
+        ' Go to the next spelling error '
+        ed = self.gui.central.current_editor
+        name = editor_name(ed)
+        find_next_error(ed, name, self.gui, self.show_editor, self.edit_file)
 
     def word_replaced(self, changed_names):
         self.set_modified()
         self.update_editors_from_container(names=set(changed_names))
+
+    def word_ignored(self, word, locale):
+        if tprefs['inline_spell_check']:
+            for ed in editors.itervalues():
+                try:
+                    ed.editor.recheck_word(word, locale)
+                except AttributeError:
+                    pass
 
     def saved_searches(self):
         self.gui.saved_searches.show(), self.gui.saved_searches.raise_()
@@ -730,11 +761,7 @@ class Boss(QObject):
 
     def run_saved_searches(self, searches, action):
         ed = self.gui.central.current_editor
-        name = None
-        for n, x in editors.iteritems():
-            if x is ed:
-                name = n
-                break
+        name = editor_name(ed)
         searchable_names = self.gui.file_list.searchable_names
         if not searches or not validate_search_request(name, searchable_names, getattr(ed, 'has_marked_text', False), searches[0], self.gui):
             return
@@ -863,11 +890,7 @@ class Boss(QObject):
         ed = self.gui.central.current_editor
         if ed.syntax != 'html':
             return
-        name = None
-        for n, x in editors.iteritems():
-            if ed is x:
-                name = n
-                break
+        name = editor_name(ed)
         if name is None:
             return
         d = MultiSplit(self.gui)
@@ -1001,11 +1024,7 @@ class Boss(QObject):
             return
         ed = self.gui.central.current_editor
         if ed is not None:
-            name = None
-            for n, x in editors.iteritems():
-                if ed is x:
-                    name = n
-                    break
+            name = editor_name(ed)
             if name is not None and getattr(ed, 'syntax', None) == 'html':
                 self.gui.preview.sync_to_editor(name, ed.current_line)
 
@@ -1015,6 +1034,8 @@ class Boss(QObject):
         editor.copy_available_state_changed.connect(self.editor_copy_available_state_changed)
         editor.cursor_position_changed.connect(self.sync_preview_to_editor)
         editor.cursor_position_changed.connect(self.update_cursor_position)
+        if hasattr(editor, 'word_ignored'):
+            editor.word_ignored.connect(self.word_ignored)
         if data is not None:
             if use_template:
                 editor.init_from_template(data)
@@ -1095,6 +1116,10 @@ class Boss(QObject):
 
     def editor_data_changed(self, editor):
         self.gui.preview.start_refresh_timer()
+        for name, ed in editors.iteritems():
+            if ed is editor:
+                self.gui.toc_view.start_refresh_timer(name)
+                break
 
     def editor_undo_redo_state_changed(self, *args):
         self.apply_current_editor_state()
@@ -1118,11 +1143,7 @@ class Boss(QObject):
             actions['editor-cut'].setEnabled(ed.cut_available)
             actions['go-to-line-number'].setEnabled(ed.has_line_numbers)
             actions['fix-html-current'].setEnabled(ed.syntax == 'html')
-            name = None
-            for n, x in editors.iteritems():
-                if ed is x:
-                    name = n
-                    break
+            name = editor_name(ed)
             if name is not None and getattr(ed, 'syntax', None) == 'html':
                 if self.gui.preview.show(name):
                     # The file being displayed by the preview has changed.
@@ -1148,10 +1169,7 @@ class Boss(QObject):
             self.gui.cursor_position_widget.update_position()
 
     def editor_close_requested(self, editor):
-        name = None
-        for n, ed in editors.iteritems():
-            if ed is editor:
-                name = n
+        name = editor_name(editor)
         if not name:
             return
         if not editor.is_synced_to_container:
