@@ -655,9 +655,8 @@ from calibre.devices.hanlin.driver import HANLINV3, HANLINV5, BOOX, SPECTRA
 from calibre.devices.blackberry.driver import BLACKBERRY, PLAYBOOK
 from calibre.devices.cybook.driver import CYBOOK, ORIZON, MUSE
 from calibre.devices.eb600.driver import (EB600, COOL_ER, SHINEBOOK, TOLINO,
-                POCKETBOOK360, GER2, ITALICA, ECLICTO, DBOOK, INVESBOOK,
-                BOOQ, ELONEX, POCKETBOOK301, MENTOR, POCKETBOOK602,
-                POCKETBOOK701, POCKETBOOK360P, PI2, POCKETBOOK622)
+                GER2, ITALICA, ECLICTO, DBOOK, INVESBOOK,
+                BOOQ, ELONEX, MENTOR, PI2)
 from calibre.devices.iliad.driver import ILIAD
 from calibre.devices.irexdr.driver import IREXDR1000, IREXDR800
 from calibre.devices.jetbook.driver import (JETBOOK, MIBUK, JETBOOK_MINI,
@@ -684,7 +683,9 @@ from calibre.devices.sne.driver import SNE
 from calibre.devices.misc import (
     PALMPRE, AVANT, SWEEX, PDNOVEL, GEMEI, VELOCITYMICRO, PDNOVEL_KOBO,
     LUMIREAD, ALURATEK_COLOR, TREKSTOR, EEEREADER, NEXTBOOK, ADAM, MOOVYBOOK,
-    COBY, EX124G, WAYTEQ, WOXTER, POCKETBOOK626)
+    COBY, EX124G, WAYTEQ, WOXTER)
+from calibre.devices.pocketbook.driver import (POCKETBOOK360, POCKETBOOK301,
+    POCKETBOOK602, POCKETBOOK701, POCKETBOOK360P, POCKETBOOK622)
 from calibre.devices.folder_device.driver import FOLDER_DEVICE_FOR_CONFIG
 from calibre.devices.kobo.driver import KOBO, KOBOTOUCH
 from calibre.devices.bambook.driver import BAMBOOK
