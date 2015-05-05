@@ -1,7 +1,7 @@
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 '''
-Device scanner that fetches list of devices on system ina  platform dependent
+Device scanner that fetches list of devices on system in a platform dependent
 manner.
 '''
 
