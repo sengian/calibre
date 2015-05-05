@@ -11,6 +11,7 @@ __docformat__ = 'restructuredtext en'
 Device driver for the PocketBook devices
 '''
 
+import re
 # import os, time, re
 # from contextlib import closing
 # from datetime import date
@@ -18,15 +19,132 @@ Device driver for the PocketBook devices
 # from calibre import fsync
 # from calibre.devices.mime import mime_type_ext
 # from calibre.devices.errors import DeviceError
-# from calibre.devices.usbms.driver import USBMS, debug_print
+from calibre.devices.usbms.driver import USBMS, debug_print
 # from calibre.devices.usbms.device import USBDevice
 # from calibre.devices.usbms.books import CollectionsBookList
-# from calibre.devices.usbms.books import BookList
+from calibre.devices.usbms.books import BookList
+from calibre.devices.eb600.driver import EB600
 # from calibre.ebooks.metadata import authors_to_sort_string, authors_to_string
 # from calibre.constants import islinux
 
-DBPATH = 'Sony_Reader/database/books.db'
-THUMBPATH = 'Sony_Reader/database/cache/books/%s/thumbnail/main_thumbnail.jpg'
+class POCKETBOOK360(EB600):
+
+    # Device info on OS X
+    # (8069L, 5768L, 272L, u'', u'', u'1.00')
+
+    name = 'PocketBook 360 Device Interface'
+
+    gui_name = 'PocketBook 360'
+    VENDOR_ID   = [0x1f85, 0x525]
+    PRODUCT_ID  = [0x1688, 0xa4a5]
+    BCD         = [0x110]
+
+    FORMATS = ['epub', 'fb2', 'prc', 'mobi', 'pdf', 'djvu', 'rtf', 'chm', 'txt']
+
+    VENDOR_NAME = ['PHILIPS', '__POCKET', 'POCKETBO']
+    WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = ['MASS_STORGE', 'BOOK_USB_STORAGE',
+            'OK_POCKET_611_61', 'OK_POCKET_360+61']
+
+    OSX_MAIN_MEM = OSX_CARD_A_MEM = 'Philips Mass Storge Media'
+    OSX_MAIN_MEM_VOL_PAT = re.compile(r'/Pocket')
+
+    @classmethod
+    def can_handle(cls, dev, debug=False):
+        return dev[-1] == '1.00' and not dev[-2] and not dev[-3]
+
+class POCKETBOOK301(USBMS):
+
+    name           = 'PocketBook 301 Device Interface'
+    description    = _('Communicate with the PocketBook 301 reader.')
+    author         = 'Kovid Goyal'
+    supported_platforms = ['windows', 'osx', 'linux']
+    FORMATS = ['epub', 'fb2', 'prc', 'mobi', 'pdf', 'djvu', 'rtf', 'chm', 'txt']
+
+    SUPPORTS_SUB_DIRS = True
+
+    MAIN_MEMORY_VOLUME_LABEL  = 'PocketBook 301 Main Memory'
+    STORAGE_CARD_VOLUME_LABEL = 'PocketBook 301 Storage Card'
+
+    VENDOR_ID   = [0x1]
+    PRODUCT_ID  = [0x301]
+    BCD         = [0x132]
+
+class POCKETBOOK602(USBMS):
+
+    name = 'PocketBook Pro 602/902 Device Interface'
+    description    = _('Communicate with the PocketBook 515/602/603/902/903/Pro 912 reader.')
+    author         = 'Kovid Goyal'
+    supported_platforms = ['windows', 'osx', 'linux']
+    FORMATS = ['epub', 'fb2', 'prc', 'mobi', 'pdf', 'djvu', 'rtf', 'chm',
+            'doc', 'tcr', 'txt']
+
+    EBOOK_DIR_MAIN = 'books'
+    SUPPORTS_SUB_DIRS = True
+    SCAN_FROM_ROOT = True
+
+    VENDOR_ID   = [0x0525]
+    PRODUCT_ID  = [0xa4a5]
+    BCD         = [0x0324, 0x0330]
+
+    VENDOR_NAME = ['', 'LINUX']
+    WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = ['PB602', 'PB603', 'PB902',
+            'PB903', 'Pocket912', 'PB', 'FILE-STOR_GADGET']
+
+class POCKETBOOK622(POCKETBOOK602):
+
+    name = 'PocketBook 622 Device Interface'
+    description    = _('Communicate with the PocketBook 622 and 623 readers.')
+    EBOOK_DIR_MAIN = ''
+
+    VENDOR_ID   = [0x0489]
+    PRODUCT_ID  = [0xe107, 0xcff1]
+    BCD         = [0x0326]
+
+    VENDOR_NAME = 'LINUX'
+    WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = 'FILE-STOR_GADGET'
+
+class POCKETBOOK360P(POCKETBOOK602):
+
+    name = 'PocketBook 360+ Device Interface'
+    description    = _('Communicate with the PocketBook 360+ reader.')
+    BCD         = [0x0323]
+    EBOOK_DIR_MAIN = ''
+
+    VENDOR_NAME = '__POCKET'
+    WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = 'BOOK_USB_STORAGE'
+
+class POCKETBOOK701(USBMS):
+
+    name = 'PocketBook 701 Device Interface'
+    description = _('Communicate with the PocketBook 701')
+    author = _('Kovid Goyal')
+
+    supported_platforms = ['windows', 'osx', 'linux']
+    FORMATS = ['epub', 'fb2', 'prc', 'mobi', 'pdf', 'djvu', 'rtf', 'chm',
+            'doc', 'tcr', 'txt']
+
+    EBOOK_DIR_MAIN = 'books'
+    SUPPORTS_SUB_DIRS = True
+
+    VENDOR_ID   = [0x18d1]
+    PRODUCT_ID  = [0xa004]
+    BCD         = [0x0224]
+
+    VENDOR_NAME = 'ANDROID'
+    WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = '__UMS_COMPOSITE'
+
+    def windows_sort_drives(self, drives):
+        if len(drives) < 2:
+            return drives
+        main = drives.get('main', None)
+        carda = drives.get('carda', None)
+        if main and carda:
+            drives['main'] = carda
+            drives['carda'] = main
+        return drives
+
+DBPATH = 'system/explorer-2/explorer-2.db'
+THUMBPATH = 'system/cover_chache' #TBC
 
 # class ImageWrapper(object):
     # def __init__(self, image_path):
@@ -37,17 +155,32 @@ class POCKETBOOK(USBMS):
     gui_name       = 'PocketBook Reader'
     description    = _('Communicate with the PocketBook readers')
     author         = 'Sengian'
-    supported_platforms = ['windows', 'osx', 'linux']
-    path_sep = '/'
-    # booklist_class = CollectionsBookList
+    version = (1, 0, 0)
 
-    FORMATS      = ['epub', 'pdf', 'txt', 'fb2']  # To be completed
+    dbversion = 0
+    fwversion = 0
+    supported_dbversion = 120
+
+    supported_platforms = ['windows', 'osx', 'linux']
+
+    booklist_class = CollectionsBookList
+    book_class = Book
+
+    # List of supported formats (To be completed)
+    FORMATS      = ['epub', 'pdf', 'txt', 'fb2']
     CAN_SET_METADATA = ['collections']
-    CAN_DO_DEVICE_DB_PLUGBOARD = True
 
     VENDOR_ID    = [0xfffe]   #: PocketBook Vendor Id
-    # PRODUCT_ID   = [0x05c2]
+    # PRODUCT_ID   = [0x05c2] #Check Wifi
     # BCD          = [0x226]
+
+    SUPPORTS_SUB_DIRS = True
+
+    EBOOK_DIR_MAIN   = ''
+
+    SUPPORTS_ANNOTATIONS = True
+    path_sep = '/'
+    CAN_DO_DEVICE_DB_PLUGBOARD = True
 
     VENDOR_NAME        = 'PocketBook'
     WINDOWS_MAIN_MEM   = re.compile(
@@ -60,7 +193,7 @@ class POCKETBOOK(USBMS):
     STORAGE_CARD_VOLUME_LABEL = 'SONY Reader Storage Card'
 
     THUMBNAIL_HEIGHT = 144
-    SUPPORTS_SUB_DIRS = True
+    
     SUPPORTS_USE_AUTHOR_SORT = True
     MUST_READ_METADATA = True
     EBOOK_DIR_MAIN   = 'Sony_Reader/media/books'
