@@ -12,6 +12,7 @@ Device driver for the PocketBook devices
 '''
 
 import re
+import sqlite3 as sqlite
 # import os, time, re
 # from contextlib import closing
 # from datetime import date
@@ -21,8 +22,7 @@ import re
 # from calibre.devices.errors import DeviceError
 from calibre.devices.usbms.driver import USBMS, debug_print
 # from calibre.devices.usbms.device import USBDevice
-# from calibre.devices.usbms.books import CollectionsBookList
-from calibre.devices.usbms.books import BookList
+from calibre.devices.usbms.books import BookList, CollectionsBookList
 from calibre.devices.eb600.driver import EB600
 # from calibre.ebooks.metadata import authors_to_sort_string, authors_to_string
 # from calibre.constants import islinux
@@ -143,7 +143,6 @@ class POCKETBOOK701(USBMS):
             drives['carda'] = main
         return drives
 
-DBPATH = 'system/explorer-2/explorer-2.db'
 THUMBPATH = 'system/cover_chache' #TBC
 
 # class ImageWrapper(object):
@@ -163,41 +162,31 @@ class POCKETBOOK(USBMS):
 
     supported_platforms = ['windows', 'osx', 'linux']
 
-    booklist_class = CollectionsBookList
-    book_class = Book
+    # booklist_class = CollectionsBookList
+    # book_class = Book
 
     # List of supported formats (To be completed)
-    FORMATS      = ['epub', 'pdf', 'txt', 'fb2']
-    CAN_SET_METADATA = ['collections']
+    FORMATS      = ['epub', 'pdf', 'fb2', 'txt', 'pdf', 'html', 'djvu', 'doc', 'docx', 'rtf', 'chm', 'mobi']
+    CAN_SET_METADATA = ['title', 'authors', 'collections']
 
     VENDOR_ID    = [0xfffe]   #: PocketBook Vendor Id
-    # PRODUCT_ID   = [0x05c2] #Check Wifi
+    # PRODUCT_ID   = [0x05c2] #Check Wifi, put generic here
     # BCD          = [0x226]
+    DEVICE_NAME = 'PocketBook'
 
     SUPPORTS_SUB_DIRS = True
+    SCAN_FROM_ROOT = True
+    MUST_READ_METADATA = True
+    THUMBNAIL_HEIGHT = 144 # To be confirmed
 
     EBOOK_DIR_MAIN   = ''
-
+    MAIN_MEMORY_VOLUME_LABEL = 'PocketBook Reader Main Memory'
+    STORAGE_CARD_VOLUME_LABEL = 'PocketBook Reader Storage Card'
 
     # SUPPORTS_ANNOTATIONS = True
-    # path_sep = '/'
     # CAN_DO_DEVICE_DB_PLUGBOARD = True
 
-    # VENDOR_NAME        = 'PocketBook'
-    # WINDOWS_MAIN_MEM   = re.compile(
-            # r'(PRS-T(1|2|2N|3)&)'
-            # )
-    # WINDOWS_CARD_A_MEM = re.compile(
-            # r'(PRS-T(1|2|2N|3)_{1,2}SD&)'
-            # )
-    # MAIN_MEMORY_VOLUME_LABEL = 'SONY Reader Main Memory'
-    # STORAGE_CARD_VOLUME_LABEL = 'SONY Reader Storage Card'
-
-    # THUMBNAIL_HEIGHT = 144
-    
     # SUPPORTS_USE_AUTHOR_SORT = True
-    # MUST_READ_METADATA = True
-    # EBOOK_DIR_MAIN   = 'Sony_Reader/media/books'
 
     # EXTRA_CUSTOMIZATION_MESSAGE = [
         # _('Comma separated list of metadata fields '
@@ -244,19 +233,33 @@ class POCKETBOOK(USBMS):
     # plugboards = None
     # plugboard_func = None
 
-# class POCKETBOOK626(POCKETBOOK):
+    def _device_database_path(self):
+        return self.normalize_path(self._main_prefix + 'system/explorer-2/explorer-2.db')
 
-    # name  = 'PocketBook Touch Lux 2'
-    # description    = _('Communicate with the PocketBook Touch Lux 2 reader')
-    # # Ordered list of supported formats
-    # FORMATS     = ['epub', 'pdf', 'fb2', 'txt', 'pdf', 'html', 'djvu', 'doc', 'docx', 'rtf', 'chm']
-    # VENDOR_ID   = [0xfffe]
+    def _device_firmware(self):
+        # Return a dict with all the infos from the reader (TBC)
+        fw_path = self.normalize_path(self._main_prefix + 'fwinfo.txt')
+        return ''
+
+    def _device_db_version(self):
+        # Return an integer with the db version
+        return self.normalize_path(self._main_prefix + 'system/explorer-2/explorer-2.db')
+        debug_print('Pocketbook: ')
+
+class POCKETBOOK626(POCKETBOOK):
+
+    name  = 'PocketBook Touch Lux 2'
+    description    = _('Communicate with the PocketBook Touch Lux 2 reader')
+
+    # List of supported formats
+    FORMATS     = ['epub', 'pdf', 'fb2', 'txt', 'pdf', 'html', 'djvu', 'doc',       'docx', 'rtf', 'chm'] # To be removed or integrated?
+
     # PRODUCT_ID  = [0x0001]
     # BCD         = [0x0230]
+    DEVICE_NAME = 'PocketBook 626'
 
-    # EBOOK_DIR_MAIN = 'Books'
-    # SCAN_FROM_ROOT = True
-    # SUPPORTS_SUB_DIRS = True
+    VENDOR_NAME = ['USB_2.0']
+    WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = ['USB_FLASH_DRIVER']
 
-    # VENDOR_NAME = ['USB_2.0']
-    # WINDOWS_MAIN_MEM = WINDOWS_CARD_A_MEM = ['USB_FLASH_DRIVER']
+    MAIN_MEMORY_VOLUME_LABEL = 'PocketBook Touch Lux 2 Main Memory'
+    STORAGE_CARD_VOLUME_LABEL = 'PocketBook Touch Lux 2 Storage Card'
