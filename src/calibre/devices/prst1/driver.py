@@ -94,6 +94,15 @@ class PRST1(USBMS):
           'Leave this disabled if you use Metadata Plugboards.')
         _('Mark all new exported books as Read') +
               ':::' +
+<<<<<<< HEAD
+=======
+              _('Set this option if you want the author on the Sony to '
+                'appear the same way the T1 sets it. This means it will '
+                'only show the first author for books with multiple authors. '
+                'Leave this disabled if you use Metadata Plugboards.'),
+        _('Mark all new exported books as Read') +
+              ':::' +
+>>>>>>> origin/sengian-custom
               _('Set this option if you want the new exported books '
                 'to be marked as read and not appear under the Sony '
                 'new books collection.')

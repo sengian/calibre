@@ -10,8 +10,14 @@ from cssutils.css import CSSRule
 from css_selectors import parse, SelectorSyntaxError
 
 from calibre import force_unicode
+<<<<<<< HEAD
 from calibre.ebooks.oeb.base import OEB_STYLES, OEB_DOCS
 from calibre.ebooks.oeb.normalize_css import normalize_filter_css, normalizers
+=======
+from calibre.ebooks.oeb.base import OEB_STYLES, OEB_DOCS, XPNSMAP, XHTML_NS
+from calibre.ebooks.oeb.normalize_css import normalize_filter_css, normalizers
+from calibre.ebooks.oeb.stylizer import MIN_SPACE_RE, is_non_whitespace, xpath_lower_case, fix_namespace
+>>>>>>> origin/sengian-custom
 from calibre.ebooks.oeb.polish.pretty import pretty_script_or_style
 from css_selectors import Select, SelectorError
 
@@ -133,6 +139,7 @@ def remove_unused_css(container, report=None, remove_unused_classes=False):
                         num_of_removed_rules) % num_of_removed_rules)
     else:
         report(_('No unused CSS style rules found'))
+<<<<<<< HEAD
     if remove_unused_classes:
         if num_of_removed_classes > 0:
             report(ngettext('Removed %d unused class from the HTML', 'Removed %d unused classes from the HTML',
@@ -140,6 +147,9 @@ def remove_unused_css(container, report=None, remove_unused_classes=False):
         else:
             report(_('No unused class attributes found'))
     return num_of_removed_rules + num_of_removed_classes > 0
+=======
+    return num_of_removed_rules > 0
+>>>>>>> origin/sengian-custom
 
 def filter_declaration(style, properties):
     changed = False
@@ -174,12 +184,15 @@ def filter_sheet(sheet, properties):
 
 
 def filter_css(container, properties, names=()):
+<<<<<<< HEAD
     '''
     Remove the specified CSS properties from all CSS rules in the book.
 
     :param properties: Set of properties to remove. For example: :code:`{'font-family', 'color'}`.
     :param names: The files from which to remove the properties. Defaults to all HTML and CSS files in the book.
     '''
+=======
+>>>>>>> origin/sengian-custom
     if not names:
         types = OEB_STYLES | OEB_DOCS
         names = []
@@ -223,6 +236,7 @@ def filter_css(container, properties, names=()):
 
     return doc_changed
 
+<<<<<<< HEAD
 def _classes_in_selector(selector, classes):
     for attr in ('selector', 'subselector', 'parsed_tree'):
         s = getattr(selector, attr, None)
@@ -250,3 +264,5 @@ def classes_in_rule_list(css_rules):
             classes |= classes_in_rule_list(rule.cssRules)
     return classes
 
+=======
+>>>>>>> origin/sengian-custom

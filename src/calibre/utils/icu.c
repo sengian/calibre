@@ -572,11 +572,21 @@ icu_BreakIterator_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 // BreakIterator.set_text {{{
 static PyObject *
+<<<<<<< HEAD
 icu_BreakIterator_set_text(icu_BreakIterator *self, PyObject *input) {
     int32_t sz = 0;
     UChar *buf = NULL;
     UErrorCode status = U_ZERO_ERROR;
   
+=======
+icu_BreakIterator_set_text(icu_BreakIterator *self, PyObject *args, PyObject *kwargs) {
+    int32_t sz = 0;
+    UChar *buf = NULL;
+    UErrorCode status = U_ZERO_ERROR;
+    PyObject *input = NULL;
+  
+    if (!PyArg_ParseTuple(args, "O", &input)) return NULL;
+>>>>>>> origin/sengian-custom
     buf = python_to_icu(input, &sz, 1);
     if (buf == NULL) return NULL;
     ubrk_setText(self->break_iterator, buf, sz, &status);
@@ -589,15 +599,53 @@ icu_BreakIterator_set_text(icu_BreakIterator *self, PyObject *input) {
 
 } // }}}
 
+<<<<<<< HEAD
 #define IS_HYPHEN_CHAR(x) ((x) == 0x2d || (x) == 0x2010)
 
 // BreakIterator.index {{{
 static PyObject *
 icu_BreakIterator_index(icu_BreakIterator *self, PyObject *token) {
+=======
+// BreakIterator.split {{{
+static PyObject *
+icu_BreakIterator_split(icu_BreakIterator *self, PyObject *args, PyObject *kwargs) {
+    int32_t prev = 0, p = 0, sz = 0;
+    PyObject *ans = NULL, *token = NULL;
+  
+    ans = PyList_New(0);
+    if (ans == NULL) return PyErr_NoMemory();
+
+    p = ubrk_first(self->break_iterator);
+    while (p != UBRK_DONE) {
+        prev = p; p = ubrk_next(self->break_iterator);
+        if (self->type == UBRK_WORD && ubrk_getRuleStatus(self->break_iterator) == UBRK_WORD_NONE) 
+            continue;  // We are not at the start of a word
+        sz = (p == UBRK_DONE) ? self->text_len - prev : p - prev;
+        if (sz > 0) {
+            token = icu_to_python(self->text + prev, sz);
+            if (token == NULL) {
+                Py_DECREF(ans); ans = NULL; break; 
+            }
+            if (PyList_Append(ans, token) != 0) {
+                Py_DECREF(token); Py_DECREF(ans); ans = NULL; break; 
+            }
+            Py_DECREF(token);
+        }
+    }
+
+    return ans;
+
+} // }}}
+
+// BreakIterator.index {{{
+static PyObject *
+icu_BreakIterator_index(icu_BreakIterator *self, PyObject *args, PyObject *kwargs) {
+>>>>>>> origin/sengian-custom
 #if PY_VERSION_HEX >= 0x03030000 
 #error Not implemented for python >= 3.3
 #endif
 
+<<<<<<< HEAD
     UChar *buf = NULL, *needle = NULL;
     int32_t word_start = 0, p = 0, sz = 0, ans = -1, leading_hyphen = 0, trailing_hyphen = 0;
   
@@ -607,10 +655,21 @@ icu_BreakIterator_index(icu_BreakIterator *self, PyObject *token) {
     needle = buf;
     if (sz > 1 && IS_HYPHEN_CHAR(buf[0])) { needle = buf + 1; leading_hyphen = 1; sz -= 1; }
     if (sz > 1 && IS_HYPHEN_CHAR(buf[sz-1])) trailing_hyphen = 1;
+=======
+    UChar *buf = NULL;
+    int32_t prev = 0, p = 0, sz = 0, tsz = 0, ans = -1;
+    PyObject *token = NULL;
+  
+    if (!PyArg_ParseTuple(args, "O", &token)) return NULL;
+    buf = python_to_icu(token, &sz, 1);
+    if (buf == NULL) return NULL;
+    if (sz < 1) goto end;
+>>>>>>> origin/sengian-custom
 
     Py_BEGIN_ALLOW_THREADS;
     p = ubrk_first(self->break_iterator);
     while (p != UBRK_DONE) {
+<<<<<<< HEAD
         word_start = p; p = ubrk_next(self->break_iterator);
         if (self->type == UBRK_WORD && ubrk_getRuleStatus(self->break_iterator) == UBRK_WORD_NONE) 
             continue;  // We are not at the start of a word
@@ -643,31 +702,60 @@ icu_BreakIterator_index(icu_BreakIterator *self, PyObject *token) {
 #ifdef Py_UNICODE_WIDE
     if (ans > 0) ans = u_countChar32(self->text, ans);
 #endif
+=======
+        prev = p; p = ubrk_next(self->break_iterator);
+        if (self->type == UBRK_WORD && ubrk_getRuleStatus(self->break_iterator) == UBRK_WORD_NONE) 
+            continue;  // We are not at the start of a word
+        tsz = (p == UBRK_DONE) ? self->text_len - prev : p - prev;
+        if (sz == tsz && memcmp(self->text + prev, buf, sz * sizeof(UChar)) == 0) { 
+#ifdef PY_UNICODE_WIDE
+            ans = u_countChar32(self->text, prev);
+#else
+            ans = prev; 
+#endif
+            break;
+        }
+    }
+>>>>>>> origin/sengian-custom
     Py_END_ALLOW_THREADS;
 
 end:
     free(buf);
+<<<<<<< HEAD
     return Py_BuildValue("l", (long)ans);
+=======
+    return Py_BuildValue("i", ans);
+>>>>>>> origin/sengian-custom
 
 } // }}}
 
 // BreakIterator.split2 {{{
 static PyObject *
+<<<<<<< HEAD
 icu_BreakIterator_split2(icu_BreakIterator *self, PyObject *args) {
+=======
+icu_BreakIterator_split2(icu_BreakIterator *self, PyObject *args, PyObject *kwargs) {
+>>>>>>> origin/sengian-custom
 #if PY_VERSION_HEX >= 0x03030000 
 #error Not implemented for python >= 3.3
 #endif
 
+<<<<<<< HEAD
     int32_t word_start = 0, p = 0, sz = 0, last_pos = 0, last_sz = 0;
     int is_hyphen_sep = 0, leading_hyphen = 0, trailing_hyphen = 0;
     UChar sep = 0;
     PyObject *ans = NULL, *temp = NULL, *t = NULL;
+=======
+    int32_t prev = 0, p = 0, sz = 0;
+    PyObject *ans = NULL, *temp = NULL;
+>>>>>>> origin/sengian-custom
   
     ans = PyList_New(0);
     if (ans == NULL) return PyErr_NoMemory();
 
     p = ubrk_first(self->break_iterator);
     while (p != UBRK_DONE) {
+<<<<<<< HEAD
         word_start = p; p = ubrk_next(self->break_iterator);
         if (self->type == UBRK_WORD && ubrk_getRuleStatus(self->break_iterator) == UBRK_WORD_NONE) 
             continue;  // We are not at the start of a word
@@ -711,6 +799,25 @@ icu_BreakIterator_split2(icu_BreakIterator *self, PyObject *args) {
                 }
                 Py_DECREF(temp);
             }
+=======
+        prev = p; p = ubrk_next(self->break_iterator);
+        if (self->type == UBRK_WORD && ubrk_getRuleStatus(self->break_iterator) == UBRK_WORD_NONE) 
+            continue;  // We are not at the start of a word
+        sz = (p == UBRK_DONE) ? self->text_len - prev : p - prev;
+        if (sz > 0) {
+#ifdef Py_UNICODE_WIDE
+            sz = u_countChar32(self->text + prev, sz);
+            prev = u_countChar32(self->text, prev);
+#endif
+            temp = Py_BuildValue("II", prev, sz); 
+            if (temp == NULL) {
+                Py_DECREF(ans); ans = NULL; break; 
+            } 
+            if (PyList_Append(ans, temp) != 0) {
+                Py_DECREF(temp); Py_DECREF(ans); ans = NULL; break; 
+            }
+            Py_DECREF(temp);
+>>>>>>> origin/sengian-custom
         }
     }
 
@@ -719,6 +826,7 @@ icu_BreakIterator_split2(icu_BreakIterator *self, PyObject *args) {
 } // }}}
 
 static PyMethodDef icu_BreakIterator_methods[] = {
+<<<<<<< HEAD
     {"set_text", (PyCFunction)icu_BreakIterator_set_text, METH_O,
      "set_text(unicode object) -> Set the text this iterator will operate on"
     },
@@ -728,6 +836,21 @@ static PyMethodDef icu_BreakIterator_methods[] = {
     },
 
     {"index", (PyCFunction)icu_BreakIterator_index, METH_O,
+=======
+    {"set_text", (PyCFunction)icu_BreakIterator_set_text, METH_VARARGS,
+     "set_text(unicode object) -> Set the text this iterator will operate on"
+    },
+
+    {"split", (PyCFunction)icu_BreakIterator_split, METH_VARARGS,
+     "split() -> Split the current text into tokens, returning a list of tokens"
+    },
+
+    {"split2", (PyCFunction)icu_BreakIterator_split2, METH_VARARGS,
+     "split2() -> Split the current text into tokens, returning a list of 2-tuples of the form (position of token, length of token). The numbers are suitable for indexing python strings regardless of narrow/wide builds."
+    },
+
+    {"index", (PyCFunction)icu_BreakIterator_index, METH_VARARGS,
+>>>>>>> origin/sengian-custom
      "index(token) -> Find the index of the first match for token. Useful to find, for example, words that could also be a part of a larger word. For example, index('i') in 'string i' will be 7 not 3. Returns -1 if not found."
     },
 
@@ -1076,32 +1199,58 @@ icu_break_iterator_locales(PyObject *self, PyObject *args) {
 
 // string_length {{{
 static PyObject *
+<<<<<<< HEAD
 icu_string_length(PyObject *self, PyObject *src) {
     int32_t sz = 0;
     UChar *icu = NULL;
   
+=======
+icu_string_length(PyObject *self, PyObject *args) {
+    int32_t sz = 0;
+    UChar *icu = NULL;
+    PyObject *src = NULL;
+  
+    if (!PyArg_ParseTuple(args, "O", &src)) return NULL;
+>>>>>>> origin/sengian-custom
     icu = python_to_icu(src, &sz, 1);
     if (icu == NULL) return NULL;
     sz = u_countChar32(icu, sz);
     free(icu);
+<<<<<<< HEAD
     return Py_BuildValue("l", (long)sz);
+=======
+    return Py_BuildValue("i", sz);
+>>>>>>> origin/sengian-custom
 } // }}}
 
 // utf16_length {{{
 static PyObject *
+<<<<<<< HEAD
 icu_utf16_length(PyObject *self, PyObject *src) {
+=======
+icu_utf16_length(PyObject *self, PyObject *args) {
+>>>>>>> origin/sengian-custom
 #if PY_VERSION_HEX >= 0x03030000 
 #error Not implemented for python >= 3.3
 #endif
 
     int32_t sz = 0;
+<<<<<<< HEAD
+=======
+    PyObject *src = NULL;
+>>>>>>> origin/sengian-custom
 #ifdef Py_UNICODE_WIDE
     int32_t i = 0, t = 0;
     Py_UNICODE *data = NULL;
 #endif
   
+<<<<<<< HEAD
     if (!PyUnicode_Check(src)) { PyErr_SetString(PyExc_TypeError, "Must be a unicode object"); return NULL; }
     sz = (int32_t)PyUnicode_GET_SIZE(src);
+=======
+    if (!PyArg_ParseTuple(args, "U", &src)) return NULL;
+    sz = PyUnicode_GET_SIZE(src);
+>>>>>>> origin/sengian-custom
 #ifdef Py_UNICODE_WIDE
     data = PyUnicode_AS_UNICODE(src);
     for (i = 0; i < sz; i++) {
@@ -1109,7 +1258,11 @@ icu_utf16_length(PyObject *self, PyObject *src) {
     }
     sz = t;
 #endif
+<<<<<<< HEAD
     return Py_BuildValue("l", (long)sz);
+=======
+    return Py_BuildValue("i", sz);
+>>>>>>> origin/sengian-custom
 } // }}}
 
 // Module initialization {{{
@@ -1158,6 +1311,7 @@ static PyMethodDef icu_methods[] = {
      "roundtrip(string) -> Roundtrip a unicode object from python to ICU back to python (useful for testing)"
     },
 
+<<<<<<< HEAD
     {"available_locales_for_break_iterator", icu_break_iterator_locales, METH_NOARGS, 
      "available_locales_for_break_iterator() -> Return tuple of all available locales for the BreakIterator"
     },
@@ -1167,6 +1321,17 @@ static PyMethodDef icu_methods[] = {
     },
 
     {"utf16_length", icu_utf16_length, METH_O, 
+=======
+    {"available_locales_for_break_iterator", icu_break_iterator_locales, METH_VARARGS, 
+     "available_locales_for_break_iterator() -> Return tuple of all available locales for the BreakIterator"
+    },
+
+    {"string_length", icu_string_length, METH_VARARGS, 
+     "string_length(string) -> Return the length of a string (number of unicode code points in the string). Useful on narrow python builds where len() returns an incorrect answer if the string contains surrogate pairs."
+    },
+
+    {"utf16_length", icu_utf16_length, METH_VARARGS, 
+>>>>>>> origin/sengian-custom
      "utf16_length(string) -> Return the length of a string (number of UTF-16 code points in the string). Useful on wide python builds where len() returns an incorrect answer if the string contains surrogate pairs."
     },
 

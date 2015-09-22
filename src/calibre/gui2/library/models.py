@@ -74,11 +74,18 @@ class ColumnColor(object):  # {{{
         try:
             if self.mi is None:
                 self.mi = db.new_api.get_proxy_metadata(id_)
+<<<<<<< HEAD
             color = QColor(self.formatter.safe_format(fmt, self.mi, '', self.mi,
                                                   column_name=key,
                                                   template_cache=template_cache))
             color_cache[id_][key] = color
             if color.isValid():
+=======
+            color = QColor(self.formatter.safe_format(fmt, self.mi, '', self.mi))
+            if color.isValid():
+                color = QVariant(color)
+                color_cache[id_][key] = color
+>>>>>>> origin/sengian-custom
                 self.mi = None
                 return color
         except:

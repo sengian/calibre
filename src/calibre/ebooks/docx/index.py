@@ -137,7 +137,11 @@ def split_up_block(block, a, text, parts, ldict):
 """
 The merge algorithm is a little tricky.
 We start with a list of elementary blocks. Each is an HtmlElement, a p node
+<<<<<<< HEAD
 with a list of child nodes. The last child may be a link, and the earlier ones are
+=======
+with a list of child nodes. The last child is a link, and the earlier ones are
+>>>>>>> origin/sengian-custom
 just text.
 The list is in reverse order from what we want in the index.
 There is a dictionary ldict which records the level of each child node.
@@ -154,8 +158,12 @@ Start with (p, p1) and (n, n1).
 
 Given (p, p1, ..., pk) and (n, n1, ..., nk) which we want to merge:
 
+<<<<<<< HEAD
 If there are no more levels in n, and we have a link in nk,
 then add the link from nk to the links for pk.
+=======
+If there are no more levels in n, then add the link from nk to the links for pk.
+>>>>>>> origin/sengian-custom
 This might be the first link for pk, or we might get a list of references.
 
 Otherwise nk+1 is the next level in n. Look for a matching entry in p. It must have
@@ -169,11 +177,17 @@ to insert nk+1 and all following entries from n into p immediately following pk.
 """
 
 def find_match(prev_block, pind, nextent, ldict):
+<<<<<<< HEAD
     curlevel = ldict.get(prev_block[pind], -1)
     if curlevel < 0:
         return -1
     for p in range(pind+1, len(prev_block)):
         trylev = ldict.get(prev_block[p], -1)
+=======
+    curlevel = ldict[prev_block[pind]]
+    for p in range(pind+1, len(prev_block)):
+        trylev = ldict[prev_block[p]]
+>>>>>>> origin/sengian-custom
         if trylev <= curlevel:
             return -1
         if trylev > (curlevel+1):
@@ -184,9 +198,12 @@ def find_match(prev_block, pind, nextent, ldict):
 
 def add_link(pent, nent, ldict):
     na = nent.xpath('descendant::a[1]')
+<<<<<<< HEAD
     # If there is no link, leave it as text
     if not na or len(na) == 0:
         return
+=======
+>>>>>>> origin/sengian-custom
     na = na[0]
     pa = pent.xpath('descendant::a')
     if pa and len(pa) > 0:

@@ -195,7 +195,11 @@ right click and choose Link stylesheets to have calibre automatically insert the
 <link> tags for those stylesheets into all the selected HTML files.
 
 .. raw:: html epub
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> origin/sengian-custom
     <div style="clear:both"></div>
 
 
@@ -408,6 +412,7 @@ beautify.  Accessed via :guilabel:`Tools->Beautify all files`.
 
 .. note::
     In HTML any text can have significant whitespace, via the CSS white-space
+<<<<<<< HEAD
     directive. Therefore, beautification could potentially change the rendering
     of the HTML. To avoid this as far as possible, the beautify algorithm
     only beautifies block level tags that contain other block level tags. So,
@@ -417,6 +422,12 @@ beautify.  Accessed via :guilabel:`Tools->Beautify all files`.
     affected by beautify as it has no suitable block level tags. In such
     cases you can try different beautification tools, that are less careful,
     for example: `HTML Tidy <http://infohound.net/tidy/>`_.
+=======
+    directive. Therefor, beautification could potentially change the rendering
+    of the HTML. To avoid this, as much as possible, the beautify algorithm
+    only beautifies block level tags that contain other block level tags. So,
+    for example, text inside a <p> tag will not have its whitespace changed.
+>>>>>>> origin/sengian-custom
 
 
 Insert inline Table of Contents
@@ -432,6 +443,7 @@ If you use this tool multiple times, each invocation will cause the previously
 created inline Table of Contents to be replaced. The tool can be accessed via
 :guilabel:`Tools->Table of Contents->Insert inline Table of Contents`.
 
+<<<<<<< HEAD
 Set Semantics
 ^^^^^^^^^^^^^^^^^
 
@@ -442,6 +454,8 @@ table of contents, etc. Simply choose the type of semantic information you want
 to specify and then select the location in the book the link should point to.
 This tool can be accessed via :guilabel:`Tools->Set semantics`.
 
+=======
+>>>>>>> origin/sengian-custom
 Filter style information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -537,6 +551,7 @@ multiple locations`. This will allow you to easily split a large file at all
 heading tags or all tags having a certain class and so on.
 
 .. raw:: html epub
+<<<<<<< HEAD
 
     <div style="clear:both"></div>
 
@@ -566,6 +581,9 @@ You can enable the Live CSS panel via :guilabel:`View->Live CSS`.
 
 .. raw:: html epub
 
+=======
+    
+>>>>>>> origin/sengian-custom
     <div style="clear:both"></div>
 
 Miscellaneous Tools
@@ -585,7 +603,11 @@ Contents`.
 Checking the spelling of words in the book
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+<<<<<<< HEAD
 You can run a spelling checker via :guilabel:`Tools->Check spelling`.
+=======
+You can run a spelling checker via :guilabel:`Tools->Check spelling`. 
+>>>>>>> origin/sengian-custom
 
 .. image:: images/edit-book-spell.png
     :alt: The Check Spelling tool
@@ -634,9 +656,15 @@ Adding new dictionaries
 The spelling checker comes with builtin dictionaries for the English and
 Spanish languages. You can install your own dictionaries via
 :guilabel:`Preferences->Editor->Manage spelling dictionaries`. The spell
+<<<<<<< HEAD
 checker can use dictionaries from the LibreOffice program (in the .oxt
 format). You can download these dictionaries from
 `The LibreOffice Extensions repository <http://extensions.libreoffice.org/extension-center?getCategories=Dictionary&getCompatibility=any&sort_on=positive_ratings>`_.
+=======
+checker can use dictionaries from the OpenOffice program (in the .oxt
+format). You can download these dictionaries from
+`The OpenOffice Extensions repository <http://extensions.openoffice.org/>`_.
+>>>>>>> origin/sengian-custom
 
 
 Inserting special characters

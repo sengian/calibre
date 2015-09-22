@@ -33,7 +33,10 @@ from calibre.gui2.tweak_book.preview import Preview
 from calibre.gui2.tweak_book.plugin import create_plugin_actions
 from calibre.gui2.tweak_book.search import SearchPanel
 from calibre.gui2.tweak_book.check import Check
+<<<<<<< HEAD
 from calibre.gui2.tweak_book.check_links import CheckExternalLinks
+=======
+>>>>>>> origin/sengian-custom
 from calibre.gui2.tweak_book.spell import SpellCheck
 from calibre.gui2.tweak_book.search import SavedSearches
 from calibre.gui2.tweak_book.toc import TOCViewer
@@ -380,6 +383,7 @@ class Main(MainWindow):
                                       _('Arrange into folders'))
         self.action_set_semantics = treg('tags.png', _('Set &Semantics'), self.boss.set_semantics, 'set-semantics', (),
                                         _('Set Semantics'))
+<<<<<<< HEAD
         self.action_filter_css = treg('filter.png', _('&Filter style information'), self.boss.filter_css, 'filter-css', (),
                                      _('Filter style information'))
         self.action_manage_fonts = treg('font.png', _('Manage &fonts'), self.boss.manage_fonts, 'manage-fonts', (), _('Manage fonts in the book'))
@@ -392,6 +396,10 @@ class Main(MainWindow):
         def ereg(icon, text, target, sid, keys, description):
             return reg(icon, text, partial(self.boss.editor_action, target), sid, keys, description)
         register_text_editor_actions(ereg, self.palette())
+=======
+        self.action_filter_css = reg('filter.png', _('&Filter style information'), self.boss.filter_css, 'filter-css', (),
+                                     _('Filter style information'))
+>>>>>>> origin/sengian-custom
 
         # Polish actions
         group = _('Polish Book')
@@ -447,8 +455,13 @@ class Main(MainWindow):
 
         # Check Book actions
         group = _('Check Book')
+<<<<<<< HEAD
         self.action_check_book = treg('debug.png', _('&Check Book'), self.boss.check_requested, 'check-book', ('F7'), _('Check book for errors'))
         self.action_spell_check_book = treg('spell-check.png', _('Check &spelling'), self.boss.spell_check_requested, 'spell-check-book', ('Alt+F7'), _(
+=======
+        self.action_check_book = reg('debug.png', _('&Check Book'), self.boss.check_requested, 'check-book', ('F7'), _('Check book for errors'))
+        self.action_spell_check_book = reg('spell-check.png', _('Check &spelling'), self.boss.spell_check_requested, 'spell-check-book', ('Alt+F7'), _(
+>>>>>>> origin/sengian-custom
             'Check book for spelling errors'))
         self.action_check_book_next = reg('forward.png', _('&Next error'), partial(
             self.check_book.next_error, delta=1), 'check-book-next', ('Ctrl+F7'), _('Show next error'))
@@ -544,7 +557,10 @@ class Main(MainWindow):
         e.addAction(self.action_set_semantics)
         e.addAction(self.action_filter_css)
         e.addAction(self.action_spell_check_book)
+<<<<<<< HEAD
         e.addAction(self.action_check_external_links)
+=======
+>>>>>>> origin/sengian-custom
         e.addAction(self.action_check_book)
         e.addAction(self.action_reports)
 
@@ -613,6 +629,7 @@ class Main(MainWindow):
             actions[name] = b.toggleViewAction()
             b.setIconSize(QSize(tprefs['toolbar_icon_size'], tprefs['toolbar_icon_size']))
             return b
+<<<<<<< HEAD
         self.global_bar = create(_('Book tool bar'), 'global')
         self.tools_bar = create(_('Tools tool bar'), 'tools')
         self.plugins_bar = create(_('Plugins tool bar'), 'plugins')
@@ -647,6 +664,32 @@ class Main(MainWindow):
         for x in tprefs['global_plugins_toolbar']:
             add(self.plugins_bar, x)
         self.plugins_bar.setVisible(bool(tprefs['global_plugins_toolbar']))
+=======
+
+        a = create(_('Book tool bar'), 'global').addAction
+        for x in ('new_file', 'open_book', None, 'global_undo', 'global_redo', 'create_checkpoint', 'save', None, 'toc', 'check_book', 'spell_check_book'):
+            if x is None:
+                self.global_bar.addSeparator()
+                continue
+            a(getattr(self, 'action_' + x))
+        self.donate_button = b = ThrobbingButton(self)
+        b.clicked.connect(open_donate)
+        b.setAutoRaise(True)
+        self.donate_widget = w = create_donate_widget(b)
+        if hasattr(w, 'filler'):
+            w.filler.setVisible(False)
+        b.set_normal_icon_size(self.global_bar.iconSize().width(), self.global_bar.iconSize().height())
+        b.setIcon(QIcon(I('donate.png')))
+        b.setToolTip(_('Donate to support calibre development'))
+        QTimer.singleShot(10, b.start_animation)
+        self.global_bar.addWidget(w)
+        self.global_bar.addAction(self.action_insert_char)
+        a(self.action_help)
+
+        a = create(_('Polish book tool bar'), 'polish').addAction
+        for x in ('embed_fonts', 'subset_fonts', 'smarten_punctuation', 'remove_unused_css'):
+            a(getattr(self, 'action_' + x))
+>>>>>>> origin/sengian-custom
 
     def create_docks(self):
 

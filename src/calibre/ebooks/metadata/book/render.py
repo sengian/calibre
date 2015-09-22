@@ -149,7 +149,11 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
             ans.append((field, row % (name, u', '.join(fmts))))
         elif field == 'identifiers':
             urls = urls_from_identifiers(mi.identifiers)
+<<<<<<< HEAD
             links = [u'<a href="%s" title="%s:%s" data-item="%s">%s</a>' % (a(url), a(id_typ), a(id_val), a(item_data(field, id_typ, book_id)), p(namel))
+=======
+            links = [u'<a href="%s" title="%s:%s">%s</a>' % (a(url), a(id_typ), a(id_val), p(namel))
+>>>>>>> origin/sengian-custom
                     for namel, id_typ, id_val, url in urls]
             links = u', '.join(links)
             if links:

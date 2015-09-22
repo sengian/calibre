@@ -17,14 +17,23 @@ from PyQt5.Qt import (
     QDialog, QGridLayout, QStackedWidget, QDialogButtonBox, QListWidget,
     QListWidgetItem, QIcon, QWidget, QSize, QFormLayout, Qt, QSpinBox,
     QCheckBox, pyqtSignal, QDoubleSpinBox, QComboBox, QLabel, QFont,
+<<<<<<< HEAD
     QFontComboBox, QPushButton, QSizePolicy, QHBoxLayout, QGroupBox,
     QToolButton, QVBoxLayout, QSpacerItem, QTimer)
+=======
+    QFontComboBox, QPushButton, QSizePolicy)
+>>>>>>> origin/sengian-custom
 
 from calibre import prepare_string_for_xml
 from calibre.gui2 import info_dialog
 from calibre.gui2.keyboard import ShortcutConfig
+<<<<<<< HEAD
 from calibre.gui2.tweak_book import tprefs, toolbar_actions, editor_toolbar_actions, actions
 from calibre.gui2.tweak_book.editor.themes import default_theme, all_theme_names, ThemeEditor
+=======
+from calibre.gui2.tweak_book import tprefs
+from calibre.gui2.tweak_book.editor.themes import default_theme, THEMES
+>>>>>>> origin/sengian-custom
 from calibre.gui2.tweak_book.spell import ManageDictionaries
 from calibre.gui2.font_family_chooser import FontFamilyChooser
 from calibre.gui2.tweak_book.widgets import Dialog
@@ -154,7 +163,11 @@ class EditorSettings(BasicSettings):
 
     def __init__(self, parent=None):
         BasicSettings.__init__(self, parent)
+<<<<<<< HEAD
         self.dictionaries_changed = self.snippets_changed = False
+=======
+        self.dictionaries_changed = False
+>>>>>>> origin/sengian-custom
         self.l = l = QFormLayout(self)
         self.setLayout(l)
 
@@ -220,6 +233,7 @@ class EditorSettings(BasicSettings):
             ' for easy correction as you type.'))
         l.addRow(lw)
 
+<<<<<<< HEAD
         lw = self('editor_accepts_drops')
         lw.setText(_('Allow drag and drop editing of text'))
         lw.setToolTip('<p>' + _(
@@ -227,21 +241,27 @@ class EditorSettings(BasicSettings):
             ' It can be useful to turn this off if you have a misbehaving touchpad.'))
         l.addRow(lw)
 
+=======
+>>>>>>> origin/sengian-custom
         self.dictionaries = d = QPushButton(_('Manage &spelling dictionaries'), self)
         d.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         d.clicked.connect(self.manage_dictionaries)
         l.addRow(d)
 
+<<<<<<< HEAD
         self.snippets = s = QPushButton(_('Manage sni&ppets'), self)
         s.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         s.clicked.connect(self.manage_snippets)
         l.addRow(s)
 
+=======
+>>>>>>> origin/sengian-custom
     def manage_dictionaries(self):
         d = ManageDictionaries(self)
         d.exec_()
         self.dictionaries_changed = True
 
+<<<<<<< HEAD
     def manage_snippets(self):
         from calibre.gui2.tweak_book.editor.snippets import UserSnippets
         d = UserSnippets(self)
@@ -266,6 +286,8 @@ class EditorSettings(BasicSettings):
         if d.theme_name:
             s.setter(s.widget, d.theme_name)
 
+=======
+>>>>>>> origin/sengian-custom
 class IntegrationSettings(BasicSettings):
 
     def __init__(self, parent=None):
@@ -712,6 +734,7 @@ class Preferences(QDialog):
     def dictionaries_changed(self):
         return self.editor_panel.dictionaries_changed
 
+<<<<<<< HEAD
     @property
     def snippets_changed(self):
         return self.editor_panel.snippets_changed
@@ -720,6 +743,8 @@ class Preferences(QDialog):
     def toolbars_changed(self):
         return self.toolbars_panel.changed
 
+=======
+>>>>>>> origin/sengian-custom
     def restore_all_defaults(self):
         for i in xrange(self.stacks.count()):
             w = self.stacks.widget(i)

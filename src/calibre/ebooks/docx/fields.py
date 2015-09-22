@@ -178,7 +178,11 @@ class Fields(object):
             for runs in self.get_runs(field):
                 self.hyperlink_fields.append(({'anchor':dest}, runs))
         else:
+<<<<<<< HEAD
             log.warn('Unsupported reference field (%s), ignoring: %r' % (field.name, ref))
+=======
+            self.log.warn('Unsupported reference field (%s), ignoring: %r' % (field.name, ref))
+>>>>>>> origin/sengian-custom
 
     parse_noteref = parse_ref
 
@@ -209,7 +213,11 @@ class Fields(object):
         if not field.contents:
             return
         idx = parse_func(field.instructions, log)
+<<<<<<< HEAD
         hyperlinks, blocks = process_index(field, idx, self.xe_fields, log, self.namespace.XPath, self.namespace.expand)
+=======
+        hyperlinks, blocks = process_index(field, idx, self.xe_fields, log)
+>>>>>>> origin/sengian-custom
         if not blocks:
             return
         for anchor, run in hyperlinks:

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env python2
+=======
+#!/usr/bin/env python
+>>>>>>> origin/sengian-custom
 # vim:fileencoding=utf-8
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
@@ -6,7 +10,11 @@ from __future__ import (unicode_literals, division, absolute_import,
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
+<<<<<<< HEAD
 import sys, glob, os, tempfile, re, codecs
+=======
+import sys, glob, os, shutil, tempfile
+>>>>>>> origin/sengian-custom
 
 from lxml import etree
 
@@ -40,6 +48,7 @@ def parse_xcu(raw, origin='%origin%'):
         ans[(dic, aff)] = locales
     return ans
 
+<<<<<<< HEAD
 def convert_to_utf8(dic_data, aff_data, errors='strict'):
     m = re.search(br'^SET\s+(\S+)$', aff_data[:2048], flags=re.MULTILINE)
     if m is not None:
@@ -55,6 +64,8 @@ def convert_to_utf8(dic_data, aff_data, errors='strict'):
                 dic_data = dic_data.decode(enc, errors).encode('utf-8')
     return dic_data, aff_data
 
+=======
+>>>>>>> origin/sengian-custom
 def import_from_libreoffice_source_tree(source_path):
     dictionaries = {}
     for x in glob.glob(os.path.join(source_path, '*', 'dictionaries.xcu')):
@@ -73,11 +84,17 @@ def import_from_libreoffice_source_tree(source_path):
             dest = os.path.join(base, locale)
             if not os.path.exists(dest):
                 os.makedirs(dest)
+<<<<<<< HEAD
             with open(dic, 'rb') as df, open(aff, 'rb') as af:
                 dd, ad = convert_to_utf8(df.read(), af.read())
             for src, raw in ((dic, dd), (aff, ad)):
                 with open(os.path.join(dest, locale + os.path.splitext(src)[1]), 'wb') as df:
                     df.write(raw)
+=======
+            for src in (dic, aff):
+                df = os.path.join(dest, locale + os.path.splitext(src)[1])
+                shutil.copyfile(src, df)
+>>>>>>> origin/sengian-custom
             with open(os.path.join(dest, 'locales'), 'wb') as f:
                 locales.sort(key=lambda x: (0, x) if x == locale else (1, x))
                 f.write(('\n'.join(locales)).encode('utf-8'))
@@ -104,6 +121,7 @@ def import_from_oxt(source_path, name, dest_dir=None, prefix='dic-'):
         os.makedirs(dest_dir)
     num = 0
     with ZipFile(source_path) as zf:
+<<<<<<< HEAD
 
         def read_file(key):
             try:
@@ -117,6 +135,8 @@ def import_from_oxt(source_path, name, dest_dir=None, prefix='dic-'):
                     key = key[3:]
                 return zf.open(key.lstrip('/')).read()
 
+=======
+>>>>>>> origin/sengian-custom
         root = etree.fromstring(zf.open('META-INF/manifest.xml').read())
         xcu = XPath('//manifest:file-entry[@manifest:media-type="application/vnd.sun.star.configuration-data"]')(root)[0].get(
             '{%s}full-path' % NS_MAP['manifest'])
@@ -129,11 +149,18 @@ def import_from_oxt(source_path, name, dest_dir=None, prefix='dic-'):
             metadata = [name] + list(locales)
             with open(os.path.join(d, 'locales'), 'wb') as f:
                 f.write(('\n'.join(metadata)).encode('utf-8'))
+<<<<<<< HEAD
             dd, ad = convert_to_utf8(read_file(dic), read_file(aff))
             with open(os.path.join(d, '%s.dic' % locales[0]), 'wb') as f:
                 f.write(dd)
             with open(os.path.join(d, '%s.aff' % locales[0]), 'wb') as f:
                 f.write(ad)
+=======
+            with open(os.path.join(d, '%s.dic' % locales[0]), 'wb') as f:
+                shutil.copyfileobj(zf.open(dic), f)
+            with open(os.path.join(d, '%s.aff' % locales[0]), 'wb') as f:
+                shutil.copyfileobj(zf.open(aff), f)
+>>>>>>> origin/sengian-custom
             num += 1
     return num
 

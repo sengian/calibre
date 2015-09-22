@@ -19,8 +19,13 @@ from calibre.constants import cache_dir
 from calibre.ptempfile import PersistentTemporaryDirectory, TemporaryDirectory
 from calibre.ebooks.oeb.base import urlnormalize
 from calibre.ebooks.oeb.polish.main import SUPPORTED, tweak_polish
+<<<<<<< HEAD
 from calibre.ebooks.oeb.polish.container import get_container as _gc, clone_container, guess_type, OEB_DOCS, OEB_STYLES
 from calibre.ebooks.oeb.polish.cover import mark_as_cover, mark_as_titlepage, set_cover
+=======
+from calibre.ebooks.oeb.polish.container import get_container as _gc, clone_container, guess_type, OEB_FONTS, OEB_DOCS, OEB_STYLES
+from calibre.ebooks.oeb.polish.cover import mark_as_cover, mark_as_titlepage
+>>>>>>> origin/sengian-custom
 from calibre.ebooks.oeb.polish.css import filter_css
 from calibre.ebooks.oeb.polish.pretty import fix_all_html, pretty_all
 from calibre.ebooks.oeb.polish.replace import rename_files, replace_file, get_recommended_folders, rationalize_folders
@@ -32,7 +37,10 @@ from calibre.gui2.dialogs.confirm_delete import confirm
 from calibre.gui2.tweak_book import (
     set_current_container, current_container, tprefs, actions, editors,
     set_book_locale, dictionaries, editor_name)
+<<<<<<< HEAD
 from calibre.gui2.tweak_book.completion.worker import completion_worker
+=======
+>>>>>>> origin/sengian-custom
 from calibre.gui2.tweak_book.undo import GlobalUndoHistory
 from calibre.gui2.tweak_book.file_list import NewFileDialog
 from calibre.gui2.tweak_book.save import SaveManager, save_container, find_first_existing_ancestor
@@ -45,9 +53,13 @@ from calibre.gui2.tweak_book.search import validate_search_request, run_search
 from calibre.gui2.tweak_book.spell import find_next as find_next_word, find_next_error
 from calibre.gui2.tweak_book.widgets import (
     RationalizeFolders, MultiSplit, ImportForeign, QuickOpen, InsertLink,
+<<<<<<< HEAD
     InsertSemantics, BusyCursor, InsertTag, FilterCSS, AddCover)
 from calibre.utils.config import JSONConfig
 from calibre.utils.icu import numeric_sort_key
+=======
+    InsertSemantics, BusyCursor, InsertTag, FilterCSS)
+>>>>>>> origin/sengian-custom
 
 _diff_dialogs = []
 
@@ -132,6 +144,7 @@ class Boss(QObject):
         self.gui.spell_check.refresh_requested.connect(self.commit_all_editors_to_container)
         self.gui.spell_check.word_replaced.connect(self.word_replaced)
         self.gui.spell_check.word_ignored.connect(self.word_ignored)
+<<<<<<< HEAD
         self.gui.spell_check.change_requested.connect(self.word_change_requested)
         self.gui.live_css.goto_declaration.connect(self.goto_style_declaration)
         self.gui.manage_fonts.container_changed.connect(self.apply_container_update_to_gui)
@@ -145,12 +158,15 @@ class Boss(QObject):
     def currently_editing(self):
         ' Return the name of the file being edited currently or None if no file is being edited '
         return editor_name(self.gui.central.current_editor)
+=======
+>>>>>>> origin/sengian-custom
 
     def preferences(self):
         orig_spell = tprefs['inline_spell_check']
         orig_size = tprefs['toolbar_icon_size']
         p = Preferences(self.gui)
         ret = p.exec_()
+<<<<<<< HEAD
         if p.dictionaries_changed:
             dictionaries.clear_caches()
             dictionaries.initialize(force=True)  # Reread user dictionaries
@@ -165,6 +181,12 @@ class Boss(QObject):
                     for bar in ed.bars:
                         bar.setIconSize(QSize(tprefs['toolbar_icon_size'], tprefs['toolbar_icon_size']))
 
+=======
+        orig_spell = tprefs['inline_spell_check']
+        if p.dictionaries_changed:
+            dictionaries.clear_caches()
+            dictionaries.initialize(force=True)  # Reread user dictionaries
+>>>>>>> origin/sengian-custom
         if ret == p.Accepted:
             setup_cssutils_serialization()
             self.gui.apply_settings()
@@ -172,8 +194,11 @@ class Boss(QObject):
             for ed in editors.itervalues():
                 ed.apply_settings(dictionaries_changed=p.dictionaries_changed)
         if orig_spell != tprefs['inline_spell_check']:
+<<<<<<< HEAD
             from calibre.gui2.tweak_book.editor.syntax.html import refresh_spell_check_status
             refresh_spell_check_status()
+=======
+>>>>>>> origin/sengian-custom
             for ed in editors.itervalues():
                 try:
                     ed.editor.highlighter.rehighlight()
@@ -306,7 +331,10 @@ class Boss(QObject):
                                 det_msg=job.traceback, show=True)
         if cn:
             self.save_manager.clear_notify_data()
+<<<<<<< HEAD
         self.gui.check_book.clear_at_startup()
+=======
+>>>>>>> origin/sengian-custom
         dictionaries.clear_ignored(), dictionaries.clear_caches()
         parse_worker.clear()
         container = job.result
@@ -314,8 +342,12 @@ class Boss(QObject):
         completion_worker().clear_caches()
         with BusyCursor():
             self.current_metadata = self.gui.current_metadata = container.mi
+<<<<<<< HEAD
             lang = container.opf_xpath('//dc:language/text()') or [self.current_metadata.language]
             set_book_locale(lang[0])
+=======
+            set_book_locale(self.current_metadata.language)
+>>>>>>> origin/sengian-custom
             self.global_undo.open_book(container)
             self.gui.update_window_title()
             self.gui.file_list.current_edited_name = None
@@ -902,6 +934,7 @@ class Boss(QObject):
                 except AttributeError:
                     pass
 
+<<<<<<< HEAD
     def editor_link_clicked(self, url):
         ed = self.gui.central.current_editor
         name = editor_name(ed)
@@ -919,6 +952,34 @@ class Boss(QObject):
             else:
                 error_dialog(self.gui, _('Not found'), _(
                     'No file with the name %s was found in the book') % target, show=True)
+=======
+    def find_word(self, word, locations):
+        ' Go to a word from the spell check dialog '
+        ed = self.gui.central.current_editor
+        name = editor_name(ed)
+        find_next_word(word, locations, ed, name, self.gui, self.show_editor, self.edit_file)
+
+    def next_spell_error(self):
+        ' Go to the next spelling error '
+        ed = self.gui.central.current_editor
+        name = editor_name(ed)
+        find_next_error(ed, name, self.gui, self.show_editor, self.edit_file)
+
+    def word_replaced(self, changed_names):
+        self.set_modified()
+        self.update_editors_from_container(names=set(changed_names))
+
+    def word_ignored(self, word, locale):
+        if tprefs['inline_spell_check']:
+            for ed in editors.itervalues():
+                try:
+                    ed.editor.recheck_word(word, locale)
+                except AttributeError:
+                    pass
+
+    def saved_searches(self):
+        self.gui.saved_searches.show(), self.gui.saved_searches.raise_()
+>>>>>>> origin/sengian-custom
 
     def save_search(self):
         state = self.gui.central.search_panel.state
@@ -926,8 +987,21 @@ class Boss(QObject):
         self.gui.saved_searches.add_predefined_search(state)
 
     def show_saved_searches(self):
+<<<<<<< HEAD
         self.gui.saved_searches_dock.show()
     saved_searches = show_saved_searches
+=======
+        self.gui.saved_searches.show(), self.gui.saved_searches.raise_()
+
+    def run_saved_searches(self, searches, action):
+        ed = self.gui.central.current_editor
+        name = editor_name(ed)
+        searchable_names = self.gui.file_list.searchable_names
+        if not searches or not validate_search_request(name, searchable_names, getattr(ed, 'has_marked_text', False), searches[0], self.gui):
+            return
+        run_search(searches, action, ed, name, searchable_names,
+                   self.gui, self.show_editor, self.edit_file, self.show_current_diff, self.add_savepoint, self.rewind_savepoint, self.set_modified)
+>>>>>>> origin/sengian-custom
 
     def create_checkpoint(self):
         text, ok = QInputDialog.getText(self.gui, _('Choose name'), _(
@@ -943,8 +1017,12 @@ class Boss(QObject):
             f.write(ed.data)
         if name == container.opf_name:
             container.refresh_mime_map()
+<<<<<<< HEAD
             lang = container.opf_xpath('//dc:language/text()') or [self.current_metadata.language]
             set_book_locale(lang[0])
+=======
+            set_book_locale(container.mi.language)
+>>>>>>> origin/sengian-custom
         if container is current_container():
             ed.is_synced_to_container = True
             if name == container.opf_name:
@@ -1025,8 +1103,13 @@ class Boss(QObject):
     def report_save_error(self, tb):
         if self.doing_terminal_save:
             prints(tb, file=sys.stderr)
+<<<<<<< HEAD
             self.abort_terminal_save()
         self.set_modified()
+=======
+            return
+        self.gui.action_save.setEnabled(True)
+>>>>>>> origin/sengian-custom
         error_dialog(self.gui, _('Could not save'),
                      _('Saving of the book failed. Click "Show Details"'
                        ' for more information. You can try to save a copy'
@@ -1234,12 +1317,15 @@ class Boss(QObject):
         editor.cursor_position_changed.connect(self.update_cursor_position)
         if hasattr(editor, 'word_ignored'):
             editor.word_ignored.connect(self.word_ignored)
+<<<<<<< HEAD
         if hasattr(editor, 'link_clicked'):
             editor.link_clicked.connect(self.editor_link_clicked)
         if getattr(editor, 'syntax', None) == 'html':
             editor.smart_highlighting_updated.connect(self.gui.live_css.sync_to_editor)
         if hasattr(editor, 'set_request_completion'):
             editor.set_request_completion(partial(self.request_completion, name), name)
+=======
+>>>>>>> origin/sengian-custom
         if data is not None:
             if use_template:
                 editor.init_from_template(data)
@@ -1250,11 +1336,14 @@ class Boss(QObject):
         self.gui.central.add_editor(name, editor)
 
     def edit_file(self, name, syntax=None, use_template=None):
+<<<<<<< HEAD
         ''' Open the file specified by name in an editor
 
         :param syntax: The media type of the file, for example, ``'text/html'``. If not specified it is guessed from the file extension.
         :param use_template: A template to initialize the opened editor with
         '''
+=======
+>>>>>>> origin/sengian-custom
         editor = editors.get(name, None)
         if editor is None:
             syntax = syntax or syntax_from_mime(name, guess_type(name))

@@ -135,6 +135,7 @@ class CalibreUtils
         return if matches.length > 0 then matches[0] else null
 
     # }}}
+<<<<<<< HEAD
 
     setup_epub_reading_system: (name, version, layout, features) ->  # {{{
         window.navigator.epubReadingSystem = {
@@ -145,6 +146,8 @@ class CalibreUtils
                 return false
         }
     # }}}
+=======
+>>>>>>> origin/sengian-custom
 
 if window?
     window.calibre_utils = new CalibreUtils()

@@ -365,7 +365,11 @@ class FileTypePlugin(Plugin):  # {{{
 
         :param book_id: Database id of the added book.
         :param book_format: The file type of the book that was added.
+<<<<<<< HEAD
         :param db: Library database.
+=======
+                :param db: Library database.
+>>>>>>> origin/sengian-custom
         '''
         pass  # Default implementation does nothing
 
@@ -695,8 +699,11 @@ class StoreBase(Plugin):  # {{{
 # }}}
 
 class ViewerPlugin(Plugin):  # {{{
+<<<<<<< HEAD
 
     type = _('Viewer')
+=======
+>>>>>>> origin/sengian-custom
 
     '''
     These plugins are used to add functionality to the calibre viewer.
@@ -752,6 +759,7 @@ class ViewerPlugin(Plugin):  # {{{
         pass
 
 # }}}
+<<<<<<< HEAD
 
 class EditBookToolPlugin(Plugin):  # {{{
 
@@ -760,3 +768,5 @@ class EditBookToolPlugin(Plugin):  # {{{
 
 # }}}
 
+=======
+>>>>>>> origin/sengian-custom

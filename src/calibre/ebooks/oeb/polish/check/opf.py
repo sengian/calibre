@@ -257,10 +257,22 @@ def check_opf(container):
         errors.append(NonLinearItems(container.opf_name, nl_items))
 
     seen, dups = {}, {}
+<<<<<<< HEAD
     for item in container.opf_xpath('/opf:package/opf:manifest/opf:item'):
         href = item.get('href', None)
         if href is None:
             errors.append(NoHref(container.opf_name, item.get('id', None), item.sourceline))
+=======
+    for item in container.opf_xpath('/opf:package/opf:manifest/opf:item[@href]'):
+        href = item.get('href')
+        hname = container.href_to_name(href, container.opf_name)
+        if not hname or not container.exists(hname):
+            errors.append(MissingHref(container.opf_name, href, item.sourceline))
+        if href in seen:
+            if href not in dups:
+                dups[href] = [seen[href]]
+            dups[href].append(item.sourceline)
+>>>>>>> origin/sengian-custom
         else:
             hname = container.href_to_name(href, container.opf_name)
             if not hname or not container.exists(hname):

@@ -60,7 +60,11 @@ def convert_highlight_color(val):
         'darkGreen': '#008000', 'darkMagenta': '#800080', 'darkRed': '#800000', 'darkYellow': '#808000',
         'lightGray': '#c0c0c0'}.get(val, val)
 
+<<<<<<< HEAD
 def read_highlight(parent, dest, XPath, get):
+=======
+def read_highlight(parent, dest):
+>>>>>>> origin/sengian-custom
     ans = inherit
     for col in XPath('./w:highlight[@w:val]')(parent):
         val = get(col, 'w:val')

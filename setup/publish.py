@@ -173,6 +173,7 @@ class Manual(Command):
             raise SystemExit(1)
         cwd = os.getcwdu()
         try:
+<<<<<<< HEAD
             os.chdir(self.j(tdir, 'en', 'html'))
             for x in os.listdir(tdir):
                 if x != 'en':
@@ -181,6 +182,36 @@ class Manual(Command):
                 else:
                     os.symlink('..', 'en')
             self.info('Built manual for %d languages in %s minutes' % (len(jobs), int((time.time() - st)/60.)))
+=======
+            for d in ('.build', 'cli'):
+                if os.path.exists(d):
+                    shutil.rmtree(d)
+                os.makedirs(d)
+            if not os.path.exists('.build'+os.sep+'html'):
+                os.makedirs('.build'+os.sep+'html')
+            os.environ['__appname__'] = __appname__
+            os.environ['__version__'] = __version__
+            subprocess.check_call(['sphinx-build2', '-b', 'html', '-t', 'online',
+                                   '-d', '.build/doctrees', '.', '.build/html'])
+            subprocess.check_call(['sphinx-build', '-b', 'myepub', '-d',
+                                   '.build/doctrees', '.', '.build/epub'])
+            with self:
+                subprocess.check_call(['sphinx-build', '-b', 'mylatex', '-d',
+                                   '.build/doctrees', '.', '.build/latex'])
+            pwd = os.getcwdu()
+            os.chdir('.build/latex')
+            subprocess.check_call(['make', 'all-pdf'], stdout=open(os.devnull,
+                'wb'))
+            os.chdir(pwd)
+            epub_dest = self.j('.build', 'html', 'calibre.epub')
+            pdf_dest = self.j('.build', 'html', 'calibre.pdf')
+            shutil.copyfile(self.j('.build', 'epub', 'calibre.epub'), epub_dest)
+            shutil.copyfile(self.j('.build', 'latex', 'calibre.pdf'), pdf_dest)
+            subprocess.check_call(['ebook-convert', epub_dest,
+                epub_dest.rpartition('.')[0] + '.azw3',
+                '--page-breaks-before=/', '--disable-font-rescaling',
+                '--chapter=/'])
+>>>>>>> origin/sengian-custom
         finally:
             os.chdir(cwd)
 

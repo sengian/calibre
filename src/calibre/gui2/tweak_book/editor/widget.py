@@ -11,6 +11,7 @@ from functools import partial
 
 from PyQt5.Qt import (
     QMainWindow, Qt, QApplication, pyqtSignal, QMenu, qDrawShadeRect, QPainter,
+<<<<<<< HEAD
     QImage, QColor, QIcon, QPixmap, QToolButton, QAction, QTextCursor, QSize)
 
 from calibre import prints
@@ -22,6 +23,13 @@ from calibre.gui2.tweak_book import (
 from calibre.gui2 import error_dialog, open_url
 from calibre.gui2.tweak_book.editor import SPELL_PROPERTY, LINK_PROPERTY, TAG_NAME_PROPERTY, CSS_PROPERTY
 from calibre.gui2.tweak_book.editor.help import help_url
+=======
+    QImage, QColor, QIcon, QPixmap, QToolButton)
+
+from calibre.gui2 import error_dialog
+from calibre.gui2.tweak_book import actions, current_container, tprefs, dictionaries
+from calibre.gui2.tweak_book.editor import SPELL_PROPERTY
+>>>>>>> origin/sengian-custom
 from calibre.gui2.tweak_book.editor.text import TextEdit
 from calibre.utils.icu import utf16_length
 
@@ -116,8 +124,11 @@ class Editor(QMainWindow):
     data_changed = pyqtSignal(object)
     cursor_position_changed = pyqtSignal()
     word_ignored = pyqtSignal(object, object)
+<<<<<<< HEAD
     link_clicked = pyqtSignal(object)
     smart_highlighting_updated = pyqtSignal()
+=======
+>>>>>>> origin/sengian-custom
 
     def __init__(self, syntax, parent=None):
         QMainWindow.__init__(self, parent)
@@ -363,11 +374,22 @@ class Editor(QMainWindow):
         self.restore_state()
 
     def break_cycles(self):
+<<<<<<< HEAD
         for x in ('modification_state_changed', 'word_ignored', 'link_clicked', 'smart_highlighting_updated'):
             try:
                 getattr(self, x).disconnect()
             except TypeError:
                 pass  # in case this signal was never connected
+=======
+        try:
+            self.modification_state_changed.disconnect()
+        except TypeError:
+            pass  # in case this signal was never connected
+        try:
+            self.word_ignored.disconnect()
+        except TypeError:
+            pass  # in case this signal was never connected
+>>>>>>> origin/sengian-custom
         self.undo_redo_state_changed.disconnect()
         self.copy_available_state_changed.disconnect()
         self.cursor_position_changed.disconnect()
@@ -458,6 +480,7 @@ class Editor(QMainWindow):
         m = QMenu(self)
         a = m.addAction
         c = self.editor.cursorForPosition(pos)
+<<<<<<< HEAD
         origc = QTextCursor(c)
         current_cursor = self.editor.textCursor()
         r = origr = self.editor.syntax_range_for_cursor(c)
@@ -468,6 +491,12 @@ class Editor(QMainWindow):
         if r is not None and r.format.property(SPELL_PROPERTY):
             word = self.editor.text_for_range(c.block(), r)
             locale = self.editor.spellcheck_locale_for_cursor(c)
+=======
+        fmt = self.editor.syntax_format_for_cursor(c)
+        spell = fmt.property(SPELL_PROPERTY).toPyObject() if fmt is not None else None
+        if spell is not None:
+            word, locale = spell
+>>>>>>> origin/sengian-custom
             orig_pos = c.position()
             c.setPosition(orig_pos - utf16_length(word))
             found = False
@@ -477,16 +506,23 @@ class Editor(QMainWindow):
                 fc = self.editor.textCursor()
                 if fc.position() < c.position():
                     self.editor.find_spell_word([word], locale.langcode, center_on_cursor=False)
+<<<<<<< HEAD
             spell_cursor = self.editor.textCursor()
             if current_cursor.hasSelection():
                 # Restore the current cursor so that any selection is preserved
                 # for the change case actions
                 self.editor.setTextCursor(current_cursor)
+=======
+>>>>>>> origin/sengian-custom
             if found:
                 suggestions = dictionaries.suggestions(word, locale)[:7]
                 if suggestions:
                     for suggestion in suggestions:
+<<<<<<< HEAD
                         ac = m.addAction(suggestion, partial(self.editor.simple_replace, suggestion, cursor=spell_cursor))
+=======
+                        ac = m.addAction(suggestion, partial(self.editor.simple_replace, suggestion))
+>>>>>>> origin/sengian-custom
                         f = ac.font()
                         f.setBold(True), ac.setFont(f)
                     m.addSeparator()
@@ -505,6 +541,7 @@ class Editor(QMainWindow):
                             dmenu.addAction(dic.name, partial(self._nuke_word, dic.name, word, locale))
                 m.addSeparator()
 
+<<<<<<< HEAD
         if origr is not None and origr.format.property(LINK_PROPERTY):
             href = self.editor.text_for_range(origc.block(), origr)
             m.addAction(_('Open %s') % href, partial(self.link_clicked.emit, href))
@@ -516,6 +553,8 @@ class Editor(QMainWindow):
             if url is not None:
                 m.addAction(_('Show help for: %s') % word, partial(open_url, url))
 
+=======
+>>>>>>> origin/sengian-custom
         for x in ('undo', 'redo'):
             ac = actions['editor-%s' % x]
             if ac.isEnabled():
@@ -539,6 +578,7 @@ class Editor(QMainWindow):
             m.addAction(actions['multisplit'])
         m.exec_(self.editor.mapToGlobal(pos))
 
+<<<<<<< HEAD
     def goto_sourceline(self, *args, **kwargs):
         return self.editor.goto_sourceline(*args, **kwargs)
 
@@ -548,6 +588,8 @@ class Editor(QMainWindow):
     def get_tag_contents(self, *args, **kwargs):
         return self.editor.get_tag_contents(*args, **kwargs)
 
+=======
+>>>>>>> origin/sengian-custom
     def _nuke_word(self, dic, word, locale):
         if dic is None:
             dictionaries.ignore_word(word, locale)

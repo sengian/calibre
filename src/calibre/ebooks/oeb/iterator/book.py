@@ -77,7 +77,12 @@ class EbookIterator(BookmarksMixin):
                     return i
 
     def __enter__(self, processed=False, only_input_plugin=False,
+<<<<<<< HEAD
                   run_char_count=True, read_anchor_map=True, view_kepub=False, read_links=True):
+=======
+            run_char_count=True, read_anchor_map=True, view_kepub=False,
+            extract_embedded_fonts_for_qt=False):
+>>>>>>> origin/sengian-custom
         ''' Convert an ebook file into an exploded OEB book suitable for
         display in viewers/preprocessing etc. '''
 

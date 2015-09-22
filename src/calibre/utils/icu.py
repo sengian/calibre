@@ -293,7 +293,14 @@ def partition_by_first_letter(items, reverse=False, key=lambda x:x):
 string_length = _icu.string_length if is_narrow_build else len
 
 # Return the number of UTF-16 codepoints in a string
+<<<<<<< HEAD
 utf16_length = len if is_narrow_build else _icu.utf16_length
+=======
+try:
+    utf16_length = len if is_narrow_build else _icu.utf16_length
+except AttributeError:
+    utf16_length = len  # People running from source
+>>>>>>> origin/sengian-custom
 
 ################################################################################
 

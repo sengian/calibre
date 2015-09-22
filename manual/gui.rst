@@ -579,6 +579,11 @@ corner of the main window. In :guilabel:`Preferences->Look & Feel->Cover
 Browser` you can change the number of covers displayed, and even have the cover
 browser display itself in a separate popup window.
 
+.. raw:: html epub
+    
+    <div style="clear:both"></div>
+
+
 Quickview
 ----------
 
@@ -608,8 +613,11 @@ Quickview respects the virtual library setting, showing only books in the curren
     
     <div style="clear:both"></div>
 
+<<<<<<< HEAD
 .. _jobs:
 
+=======
+>>>>>>> origin/sengian-custom
 Jobs
 -----
 .. image:: images/jobs.png

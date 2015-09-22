@@ -3,7 +3,11 @@ from calibre import strftime
 from calibre.ebooks.BeautifulSoup import Tag
 
 __license__   = 'GPL v3'
+<<<<<<< HEAD
 __copyright__ = '2012-15, Bernd Leinfelder <skoll1975 at gmail.com> '
+=======
+__copyright__ = '2012-14, Bernd Leinfelder <skoll1975 at gmail.com> '
+>>>>>>> origin/sengian-custom
 
 '''
 webpaper.nzz.ch
@@ -87,7 +91,7 @@ class Nzz(BasicNewsRecipe):
             articles[section].append(
                            dict(title=caption.string,url='file://'+filename, date=pubdate, description='', content=''))
 
-        ans = [(key, articles[key]) for key in sections if key in articles]
+        ans = [(key, articles[key]) for key in sections if articles.has_key(key)]
 
         # pprint.pprint(ans)
 

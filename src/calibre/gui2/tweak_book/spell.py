@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env python2
+=======
+#!/usr/bin/env python
+>>>>>>> origin/sengian-custom
 # vim:fileencoding=utf-8
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
@@ -11,13 +15,21 @@ from collections import defaultdict, OrderedDict
 from threading import Thread
 from functools import partial
 
+<<<<<<< HEAD
 from PyQt5.Qt import (
+=======
+from PyQt4.Qt import (
+>>>>>>> origin/sengian-custom
     QGridLayout, QApplication, QTreeWidget, QTreeWidgetItem, Qt, QFont, QSize,
     QStackedLayout, QLabel, QVBoxLayout, QWidget, QPushButton, QIcon, QMenu,
     QDialogButtonBox, QLineEdit, QDialog, QToolButton, QFormLayout, QHBoxLayout,
     pyqtSignal, QAbstractTableModel, QModelIndex, QTimer, QTableView, QCheckBox,
+<<<<<<< HEAD
     QComboBox, QListWidget, QListWidgetItem, QInputDialog, QPlainTextEdit, QKeySequence,
     QT_VERSION_STR)
+=======
+    QComboBox, QListWidget, QListWidgetItem, QInputDialog, QPlainTextEdit, QKeySequence)
+>>>>>>> origin/sengian-custom
 
 from calibre.constants import __appname__, plugins
 from calibre.ebooks.oeb.polish.spell import replace_word, get_all_words, merge_locations, get_checkable_file_names
@@ -27,6 +39,7 @@ from calibre.gui2.languages import LanguagesEdit
 from calibre.gui2.progress_indicator import ProgressIndicator
 from calibre.gui2.tweak_book import dictionaries, current_container, set_book_locale, tprefs, editors
 from calibre.gui2.tweak_book.widgets import Dialog
+<<<<<<< HEAD
 from calibre.spell import DictionaryLocale
 from calibre.spell.dictionary import (
     builtin_dictionaries, custom_dictionaries, best_locale_for_language,
@@ -35,6 +48,14 @@ from calibre.spell.import_from import import_from_oxt
 from calibre.spell.break_iterator import split_into_words
 from calibre.utils.localization import calibre_langcode_to_name, get_language, get_lang, canonicalize_lang
 from calibre.utils.icu import sort_key, primary_sort_key, primary_contains, contains
+=======
+from calibre.spell.dictionary import (
+    builtin_dictionaries, custom_dictionaries, best_locale_for_language,
+    get_dictionary, DictionaryLocale, dprefs, remove_dictionary, rename_dictionary)
+from calibre.spell.import_from import import_from_oxt
+from calibre.utils.localization import calibre_langcode_to_name, get_language, get_lang, canonicalize_lang
+from calibre.utils.icu import sort_key, primary_sort_key, primary_contains
+>>>>>>> origin/sengian-custom
 
 LANG = 0
 COUNTRY = 1
@@ -57,11 +78,19 @@ class AddDictionary(QDialog):  # {{{
         self.setLayout(l)
 
         self.la = la = QLabel('<p>' + _(
+<<<<<<< HEAD
         '''{0} supports the use of LibreOffice dictionaries for spell checking. You can
             download more dictionaries from <a href="{1}">the LibreOffice extensions repository</a>.
             The dictionary will download as an .oxt file. Simply specify the path to the
             downloaded .oxt file here to add the dictionary to {0}.'''.format(
                 __appname__, 'http://extensions.libreoffice.org/extension-center?getCategories=Dictionary&getCompatibility=any&sort_on=positive_ratings'))+'<p>')  # noqa
+=======
+        '''{0} supports the use of OpenOffice dictionaries for spell checking. You can
+            download more dictionaries from <a href="{1}">the OpenOffice extensions repository</a>.
+            The dictionary will download as an .oxt file. Simply specify the path to the
+            downloaded .oxt file here to add the dictionary to {0}.'''.format(
+                __appname__, 'http://extensions.openoffice.org'))+'<p>')
+>>>>>>> origin/sengian-custom
         la.setWordWrap(True)
         la.setOpenExternalLinks(True)
         la.setMinimumWidth(450)
@@ -146,7 +175,11 @@ class UserWordList(QListWidget):
         words = []
         for item in (self.item(i) for i in xrange(self.count())):
             if item.isSelected():
+<<<<<<< HEAD
                 words.append(item.data(Qt.UserRole)[0])
+=======
+                words.append(item.data(Qt.UserRole).toPyObject()[0])
+>>>>>>> origin/sengian-custom
         if words:
             QApplication.clipboard().setText('\n'.join(words))
 
@@ -277,7 +310,11 @@ class ManageUserDictionaries(Dialog):
         d = self.dictionaries.currentItem()
         if d is None:
             return
+<<<<<<< HEAD
         return d.data(Qt.UserRole)
+=======
+        return d.data(Qt.UserRole).toPyObject()
+>>>>>>> origin/sengian-custom
 
     def active_toggled(self):
         d = self.current_dictionary
@@ -285,7 +322,11 @@ class ManageUserDictionaries(Dialog):
             dictionaries.mark_user_dictionary_as_active(d.name, self.is_active.isChecked())
             self.dictionaries_changed = True
             for item in (self.dictionaries.item(i) for i in xrange(self.dictionaries.count())):
+<<<<<<< HEAD
                 d = item.data(Qt.UserRole)
+=======
+                d = item.data(Qt.UserRole).toPyObject()
+>>>>>>> origin/sengian-custom
                 item.setData(Qt.FontRole, self.emph_font if d.is_active else None)
 
     def show_current_dictionary(self, *args):
@@ -366,7 +407,11 @@ class ManageUserDictionaries(Dialog):
             self.dictionaries_changed = True
 
     def remove_word(self):
+<<<<<<< HEAD
         words = {i.data(Qt.UserRole) for i in self.words.selectedItems()}
+=======
+        words = {i.data(Qt.UserRole).toPyObject() for i in self.words.selectedItems()}
+>>>>>>> origin/sengian-custom
         if words:
             kwords = [(w, DictionaryLocale(l, None)) for w, l in words]
             d = self.current_dictionary
@@ -378,7 +423,11 @@ class ManageUserDictionaries(Dialog):
     def find_word(self, word, lang):
         key = (word, lang)
         for i in xrange(self.words.count()):
+<<<<<<< HEAD
             if self.words.item(i).data(Qt.UserRole) == key:
+=======
+            if self.words.item(i).data(Qt.UserRole).toPyObject() == key:
+>>>>>>> origin/sengian-custom
                 return i
         return -1
 
@@ -456,7 +505,11 @@ class ManageDictionaries(Dialog):  # {{{
 
     def data_changed(self, item, column):
         if column == 0 and item.type() == DICTIONARY:
+<<<<<<< HEAD
             d = item.data(0, Qt.UserRole)
+=======
+            d = item.data(0, Qt.UserRole).toPyObject()
+>>>>>>> origin/sengian-custom
             if not d.builtin and unicode(item.text(0)) != d.name:
                 rename_dictionary(d, unicode(item.text(0)))
 
@@ -506,7 +559,11 @@ class ManageDictionaries(Dialog):  # {{{
     def remove_dictionary(self):
         item = self.dictionaries.currentItem()
         if item is not None and item.type() == DICTIONARY:
+<<<<<<< HEAD
             dic = item.data(0, Qt.UserRole)
+=======
+            dic = item.data(0, Qt.UserRole).toPyObject()
+>>>>>>> origin/sengian-custom
             if not dic.builtin:
                 remove_dictionary(dic)
                 self.build_dictionaries(reread=True)
@@ -536,7 +593,11 @@ class ManageDictionaries(Dialog):  # {{{
 
     def init_country(self, item):
         pc = self.pcb
+<<<<<<< HEAD
         font = item.data(0, Qt.FontRole)
+=======
+        font = item.data(0, Qt.FontRole).toPyObject()
+>>>>>>> origin/sengian-custom
         preferred = bool(font and font.bold())
         pc.setText((_(
             'This is already the preferred variant for the {1} language') if preferred else _(
@@ -550,20 +611,34 @@ class ManageDictionaries(Dialog):  # {{{
         bf.setBold(True)
         for x in (item.parent().child(i) for i in xrange(item.parent().childCount())):
             x.setData(0, Qt.FontRole, bf if x is item else None)
+<<<<<<< HEAD
         lc = unicode(item.parent().data(0, Qt.UserRole))
         pl = dprefs['preferred_locales']
         pl[lc] = '%s-%s' % (lc, unicode(item.data(0, Qt.UserRole)))
+=======
+        lc = unicode(item.parent().data(0, Qt.UserRole).toPyObject())
+        pl = dprefs['preferred_locales']
+        pl[lc] = '%s-%s' % (lc, unicode(item.data(0, Qt.UserRole).toPyObject()))
+>>>>>>> origin/sengian-custom
         dprefs['preferred_locales'] = pl
 
     def init_dictionary(self, item):
         saf = self.fb
+<<<<<<< HEAD
         font = item.data(0, Qt.FontRole)
+=======
+        font = item.data(0, Qt.FontRole).toPyObject()
+>>>>>>> origin/sengian-custom
         preferred = bool(font and font.italic())
         saf.setText((_(
             'This is already the preferred dictionary') if preferred else
             _('Use this as the preferred dictionary')))
         saf.setEnabled(not preferred)
+<<<<<<< HEAD
         self.remove_dictionary_button.setEnabled(not item.data(0, Qt.UserRole).builtin)
+=======
+        self.remove_dictionary_button.setEnabled(not item.data(0, Qt.UserRole).toPyObject().builtin)
+>>>>>>> origin/sengian-custom
 
     def set_favorite(self):
         item = self.dictionaries.currentItem()
@@ -571,9 +646,15 @@ class ManageDictionaries(Dialog):  # {{{
         bf.setItalic(True)
         for x in (item.parent().child(i) for i in xrange(item.parent().childCount())):
             x.setData(0, Qt.FontRole, bf if x is item else None)
+<<<<<<< HEAD
         cc = unicode(item.parent().data(0, Qt.UserRole))
         lc = unicode(item.parent().parent().data(0, Qt.UserRole))
         d = item.data(0, Qt.UserRole)
+=======
+        cc = unicode(item.parent().data(0, Qt.UserRole).toPyObject())
+        lc = unicode(item.parent().parent().data(0, Qt.UserRole).toPyObject())
+        d = item.data(0, Qt.UserRole).toPyObject()
+>>>>>>> origin/sengian-custom
         locale = '%s-%s' % (lc, cc)
         pl = dprefs['preferred_dictionaries']
         pl[locale] = d.id
@@ -696,8 +777,12 @@ class WordsModel(QAbstractTableModel):
     def filter_item(self, x):
         if self.show_only_misspelt and self.spell_map[x]:
             return False
+<<<<<<< HEAD
         func = contains if tprefs['spell_check_case_sensitive_search'] else primary_contains
         if self.filter_expression is not None and not func(self.filter_expression, x[0]):
+=======
+        if self.filter_expression is not None and not primary_contains(self.filter_expression, x[0]):
+>>>>>>> origin/sengian-custom
             return False
         return True
 
@@ -749,9 +834,12 @@ class WordsModel(QAbstractTableModel):
                 self.update_word(w)
 
     def replace_word(self, w, new_word):
+<<<<<<< HEAD
         # Hack to deal with replacement words that are actually multiple words,
         # ignore all words except the first
         new_word = split_into_words(new_word)[0]
+=======
+>>>>>>> origin/sengian-custom
         for location in self.words[w]:
             location.replace(new_word)
         if w[0] == new_word:
@@ -770,7 +858,10 @@ class WordsModel(QAbstractTableModel):
             self.beginRemoveRows(QModelIndex(), row, row)
             del self.items[row]
             self.endRemoveRows()
+<<<<<<< HEAD
         self.words.pop(w, None)
+=======
+>>>>>>> origin/sengian-custom
         return new_key
 
     def update_word(self, w):
@@ -865,12 +956,19 @@ class WordsView(QTableView):
 
 class SpellCheck(Dialog):
 
+<<<<<<< HEAD
     work_finished = pyqtSignal(object, object, object)
+=======
+    work_finished = pyqtSignal(object, object)
+>>>>>>> origin/sengian-custom
     find_word = pyqtSignal(object, object)
     refresh_requested = pyqtSignal()
     word_replaced = pyqtSignal(object)
     word_ignored = pyqtSignal(object, object)
+<<<<<<< HEAD
     change_requested = pyqtSignal(object, object)
+=======
+>>>>>>> origin/sengian-custom
 
     def __init__(self, parent=None):
         self.__current_word = None
@@ -885,7 +983,10 @@ class SpellCheck(Dialog):
         self.setAttribute(Qt.WA_DeleteOnClose, False)
 
     def setup_ui(self):
+<<<<<<< HEAD
         self.state_name = 'spell-check-table-state-' + QT_VERSION_STR.partition('.')[0]
+=======
+>>>>>>> origin/sengian-custom
         set_no_activate_on_click = plugins['progress_indicator'][0].set_no_activate_on_click
         self.setWindowIcon(QIcon(I('spell-check.png')))
         self.l = l = QVBoxLayout(self)
@@ -898,7 +999,11 @@ class SpellCheck(Dialog):
         b = self.bb.addButton(_('&Refresh'), self.bb.ActionRole)
         b.setToolTip('<p>' + _('Re-scan the book for words, useful if you have edited the book since opening this dialog'))
         b.setIcon(QIcon(I('view-refresh.png')))
+<<<<<<< HEAD
         b.clicked.connect(partial(self.refresh, change_request=None))
+=======
+        b.clicked.connect(self.refresh)
+>>>>>>> origin/sengian-custom
 
         self.progress = p = QWidget(self)
         s.addWidget(p)
@@ -932,7 +1037,11 @@ class SpellCheck(Dialog):
         w.activated.connect(self.word_activated)
         w.change_to.connect(self.change_to)
         w.currentChanged = self.current_word_changed
+<<<<<<< HEAD
         state = tprefs.get(self.state_name, None)
+=======
+        state = tprefs.get('spell-check-table-state', None)
+>>>>>>> origin/sengian-custom
         hh = self.words_view.horizontalHeader()
         h.addWidget(w)
         self.words_model = m = WordsModel(self)
@@ -996,6 +1105,7 @@ class SpellCheck(Dialog):
         om.stateChanged.connect(self.update_show_only_misspelt)
         self.case_sensitive_sort = cs = QCheckBox(_('Case &sensitive sort'))
         cs.setChecked(tprefs['spell_check_case_sensitive_sort'])
+<<<<<<< HEAD
         cs.setToolTip(_('When sorting the list of words, be case sensitive'))
         cs.stateChanged.connect(self.sort_type_changed)
         self.case_sensitive_search = cs2 = QCheckBox(_('Case sensitive sea&rch'))
@@ -1005,6 +1115,12 @@ class SpellCheck(Dialog):
         self.hb = h = QHBoxLayout()
         self.summary = s = QLabel('')
         self.main.l.addLayout(h), h.addWidget(s), h.addWidget(om), h.addWidget(cs), h.addWidget(cs2), h.addStretch(1)
+=======
+        cs.stateChanged.connect(self.sort_type_changed)
+        self.hb = h = QHBoxLayout()
+        self.summary = s = QLabel('')
+        self.main.l.addLayout(h), h.addWidget(s), h.addWidget(om), h.addWidget(cs), h.addStretch(1)
+>>>>>>> origin/sengian-custom
 
     def keyPressEvent(self, ev):
         if ev.key() in (Qt.Key_Enter, Qt.Key_Return):
@@ -1019,11 +1135,14 @@ class SpellCheck(Dialog):
                 hh = self.words_view.horizontalHeader()
                 self.words_view.sortByColumn(hh.sortIndicatorSection(), hh.sortIndicatorOrder())
 
+<<<<<<< HEAD
     def search_type_changed(self):
         tprefs['spell_check_case_sensitive_search'] = bool(self.case_sensitive_search.isChecked())
         if unicode(self.filter_text.text()).strip():
             self.do_filter()
 
+=======
+>>>>>>> origin/sengian-custom
     def show_next_occurrence(self):
         self.word_activated(self.words_view.currentIndex())
 
@@ -1097,17 +1216,25 @@ class SpellCheck(Dialog):
         if w is None:
             return
         new_word = unicode(self.suggested_word.text())
+<<<<<<< HEAD
         self.change_requested.emit(w, new_word)
 
     def change_word_after_update(self, w, new_word):
         self.refresh(change_request=(w, new_word))
+=======
+        self.do_change_word(w, new_word)
+>>>>>>> origin/sengian-custom
 
     def change_to(self, w, new_word):
         if new_word is None:
             self.suggested_word.setFocus(Qt.OtherFocusReason)
             self.suggested_word.clear()
             return
+<<<<<<< HEAD
         self.change_requested.emit(w, new_word)
+=======
+        self.do_change_word(w, new_word)
+>>>>>>> origin/sengian-custom
 
     def do_change_word(self, w, new_word):
         changed_files = replace_word(current_container(), new_word, self.words_model.words[w], w[1])
@@ -1165,7 +1292,11 @@ class SpellCheck(Dialog):
         with self:
             self.words_model.filter(text)
 
+<<<<<<< HEAD
     def refresh(self, change_request=None):
+=======
+    def refresh(self):
+>>>>>>> origin/sengian-custom
         if not self.isVisible():
             return
         self.cancel = True
@@ -1174,12 +1305,20 @@ class SpellCheck(Dialog):
         self.stack.setCurrentIndex(0)
         self.progress_indicator.startAnimation()
         self.refresh_requested.emit()
+<<<<<<< HEAD
         self.thread = Thread(target=partial(self.get_words, change_request=change_request))
+=======
+        self.thread = Thread(target=self.get_words)
+>>>>>>> origin/sengian-custom
         self.thread.daemon = True
         self.cancel = False
         self.thread.start()
 
+<<<<<<< HEAD
     def get_words(self, change_request=None):
+=======
+    def get_words(self):
+>>>>>>> origin/sengian-custom
         try:
             words = get_all_words(current_container(), dictionaries.default_locale)
             spell_map = {w:dictionaries.recognized(*w) for w in words}
@@ -1192,14 +1331,22 @@ class SpellCheck(Dialog):
         if self.cancel:
             self.end_work()
         else:
+<<<<<<< HEAD
             self.work_finished.emit(words, spell_map, change_request)
+=======
+            self.work_finished.emit(words, spell_map)
+>>>>>>> origin/sengian-custom
 
     def end_work(self):
         self.stack.setCurrentIndex(1)
         self.progress_indicator.stopAnimation()
         self.words_model.clear()
 
+<<<<<<< HEAD
     def work_done(self, words, spell_map, change_request):
+=======
+    def work_done(self, words, spell_map):
+>>>>>>> origin/sengian-custom
         self.end_work()
         if not isinstance(words, dict):
             return error_dialog(self, _('Failed to check spelling'), _(
@@ -1217,6 +1364,7 @@ class SpellCheck(Dialog):
         if self.words_model.rowCount() > 0:
             self.words_view.resizeRowToContents(0)
             self.words_view.verticalHeader().setDefaultSectionSize(self.words_view.rowHeight(0))
+<<<<<<< HEAD
         if change_request is not None:
             w, new_word = change_request
             if w in self.words_model.words:
@@ -1225,6 +1373,8 @@ class SpellCheck(Dialog):
                 error_dialog(self, _('Files edited'), _(
                     'The files in the editor were edited outside the spell check dialog,'
                     ' and the word %s no longer exists.') % w[0], show=True)
+=======
+>>>>>>> origin/sengian-custom
 
     def update_summary(self):
         self.summary.setText(_('Misspelled words: {0} Total words: {1}').format(*self.words_model.counts))
@@ -1237,11 +1387,19 @@ class SpellCheck(Dialog):
         QTimer.singleShot(0, self.refresh)
 
     def accept(self):
+<<<<<<< HEAD
         tprefs[self.state_name] = bytearray(self.words_view.horizontalHeader().saveState())
         Dialog.accept(self)
 
     def reject(self):
         tprefs[self.state_name] = bytearray(self.words_view.horizontalHeader().saveState())
+=======
+        tprefs['spell-check-table-state'] = bytearray(self.words_view.horizontalHeader().saveState())
+        Dialog.accept(self)
+
+    def reject(self):
+        tprefs['spell-check-table-state'] = bytearray(self.words_view.horizontalHeader().saveState())
+>>>>>>> origin/sengian-custom
         Dialog.reject(self)
 
     @classmethod

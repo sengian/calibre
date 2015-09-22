@@ -1089,7 +1089,11 @@ class EpubContainer(Container):
         for font, alg in fonts.iteritems():
             tkey = key if alg == ADOBE_OBFUSCATION else idpf_key
             if not tkey:
+<<<<<<< HEAD
                 raise ObfuscationKeyMissing('Failed to find obfuscation key')
+=======
+                raise InvalidBook('Failed to find obfuscation key')
+>>>>>>> origin/sengian-custom
             raw = self.raw_data(font, decode=False)
             raw = decrypt_font_data(tkey, raw, alg)
             with self.open(font, 'wb') as f:

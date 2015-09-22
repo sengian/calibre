@@ -8,10 +8,16 @@ __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
 import re
 
+<<<<<<< HEAD
 from PyQt5.Qt import QTextBlockUserData
 
 from calibre.gui2.tweak_book import verify_link
 from calibre.gui2.tweak_book.editor import syntax_text_char_format, LINK_PROPERTY, CSS_PROPERTY
+=======
+from PyQt4.Qt import QTextBlockUserData
+
+from calibre.gui2.tweak_book.editor import SyntaxTextCharFormat
+>>>>>>> origin/sengian-custom
 from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter
 
 space_pat = re.compile(r'[ \n\t\r\f]+')
@@ -144,6 +150,7 @@ IN_COMMENT_CONTENT = 5
 class CSSState(object):
 
     __slots__ = ('parse', 'blocks')
+<<<<<<< HEAD
 
     def __init__(self):
         self.parse  = NORMAL
@@ -165,16 +172,45 @@ class CSSState(object):
         return "CSSState(parse=%s, blocks=%s)" % (self.parse, self.blocks)
     __str__ = __repr__
 
+=======
+
+    def __init__(self):
+        self.parse  = NORMAL
+        self.blocks = 0
+
+    def copy(self):
+        s = CSSState()
+        s.parse, s.blocks = self.parse, self.blocks
+        return s
+
+    def __eq__(self, other):
+        return self.parse == getattr(other, 'parse', -1) and \
+            self.blocks == getattr(other, 'blocks', -1)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return "CSSState(parse=%s, blocks=%s)" % (self.parse, self.blocks)
+    __str__ = __repr__
+
+>>>>>>> origin/sengian-custom
 class CSSUserData(QTextBlockUserData):
 
     def __init__(self):
         QTextBlockUserData.__init__(self)
         self.state = CSSState()
+<<<<<<< HEAD
         self.doc_name = None
 
     def clear(self, state=None, doc_name=None):
         self.state = CSSState() if state is None else state
         self.doc_name = doc_name
+=======
+
+    def clear(self, state=None):
+        self.state = CSSState() if state is None else state
+>>>>>>> origin/sengian-custom
 
 def normal(state, text, i, formats, user_data):
     ' The normal state (outside content blocks {})'

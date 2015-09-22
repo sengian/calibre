@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env python2
+=======
+#!/usr/bin/env python
+>>>>>>> origin/sengian-custom
 # vim:fileencoding=utf-8
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
@@ -6,6 +10,7 @@ from __future__ import (unicode_literals, division, absolute_import,
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
+<<<<<<< HEAD
 import os, glob, shutil, re, sys
 from collections import namedtuple, defaultdict
 from operator import attrgetter
@@ -19,11 +24,27 @@ from calibre.utils.config import JSONConfig
 from calibre.utils.icu import capitalize
 from calibre.utils.localization import get_lang, get_system_locale
 
+=======
+import cPickle, os, glob, shutil
+from collections import namedtuple
+from operator import attrgetter
+from itertools import chain
+
+from calibre.constants import plugins, config_dir
+from calibre.utils.config import JSONConfig
+from calibre.utils.localization import get_lang, canonicalize_lang, get_system_locale
+
+DictionaryLocale = namedtuple('DictionaryLocale', 'langcode countrycode')
+>>>>>>> origin/sengian-custom
 Dictionary = namedtuple('Dictionary', 'primary_locale locales dicpath affpath builtin name id')
 LoadedDictionary = namedtuple('Dictionary', 'primary_locale locales obj builtin name id')
 hunspell = plugins['hunspell'][0]
 if hunspell is None:
+<<<<<<< HEAD
     raise RuntimeError('Failed to load hunspell: %s' % plugins['hunspell'][1])
+=======
+    raise RuntimeError('Failed to load hunspell: %s' % plugins[1])
+>>>>>>> origin/sengian-custom
 dprefs = JSONConfig('dictionaries/prefs.json')
 dprefs.defaults['preferred_dictionaries'] = {}
 dprefs.defaults['preferred_locales'] = {}
@@ -43,6 +64,33 @@ class UserDictionary(object):
         return {'name':self.name, 'is_active': self.is_active, 'words':[
             (w, l) for w, l in self.words]}
 
+<<<<<<< HEAD
+=======
+ccodes, ccodemap, country_names = None, None, None
+def get_codes():
+    global ccodes, ccodemap, country_names
+    if ccodes is None:
+        data = cPickle.loads(P('localization/iso3166.pickle', allow_user_override=False, data=True))
+        ccodes, ccodemap, country_names = data['codes'], data['three_map'], data['names']
+    return ccodes, ccodemap
+
+def parse_lang_code(raw):
+    raw = raw or ''
+    parts = raw.replace('_', '-').split('-')
+    lc = canonicalize_lang(parts[0])
+    if lc is None:
+        raise ValueError('Invalid language code: %r' % raw)
+    cc = None
+    if len(parts) > 1:
+        ccodes, ccodemap = get_codes()[:2]
+        q = parts[1].upper()
+        if q in ccodes:
+            cc = q
+        else:
+            cc = ccodemap.get(q, None)
+    return DictionaryLocale(lc, cc)
+
+>>>>>>> origin/sengian-custom
 _builtins = _custom = None
 
 def builtin_dictionaries():
@@ -153,16 +201,22 @@ def get_dictionary(locale, exact_match=False):
                 return d
 
 def load_dictionary(dictionary):
+<<<<<<< HEAD
     from calibre.spell.import_from import convert_to_utf8
     with open(dictionary.dicpath, 'rb') as dic, open(dictionary.affpath, 'rb') as aff:
         dic_data, aff_data = dic.read(), aff.read()
         dic_data, aff_data = convert_to_utf8(dic_data, aff_data)
         obj = hunspell.Dictionary(dic_data, aff_data)
+=======
+    with open(dictionary.dicpath, 'rb') as dic, open(dictionary.affpath, 'rb') as aff:
+        obj = hunspell.Dictionary(dic.read(), aff.read())
+>>>>>>> origin/sengian-custom
     return LoadedDictionary(dictionary.primary_locale, dictionary.locales, obj, dictionary.builtin, dictionary.name, dictionary.id)
 
 class Dictionaries(object):
 
     def __init__(self):
+<<<<<<< HEAD
         self.remove_hyphenation = re.compile('[\u2010-]+')
         self.negative_pat = re.compile('-[.\d+]')
         self.fix_punctuation_pat = re.compile(r'''[:.]''')
@@ -170,6 +224,11 @@ class Dictionaries(object):
         self.word_cache = {}
         self.ignored_words = set()
         self.added_user_words = {}
+=======
+        self.dictionaries = {}
+        self.word_cache = {}
+        self.ignored_words = set()
+>>>>>>> origin/sengian-custom
         try:
             self.default_locale = parse_lang_code(get_lang())
         except ValueError:
@@ -192,6 +251,7 @@ class Dictionaries(object):
             ans = get_dictionary(locale)
             if ans is not None:
                 ans = load_dictionary(ans)
+<<<<<<< HEAD
                 for ud in self.active_user_dictionaries:
                     for word, langcode in ud.words:
                         if langcode == locale.langcode:
@@ -200,6 +260,8 @@ class Dictionaries(object):
                             except Exception:
                                 # not critical since all it means is that the word wont show up in suggestions
                                 prints('Failed to add the word %r to the dictionary for %s' % (word, locale), file=sys.stderr)
+=======
+>>>>>>> origin/sengian-custom
             self.dictionaries[locale] = ans
         return ans
 
@@ -241,6 +303,7 @@ class Dictionaries(object):
     def save_user_dictionaries(self):
         dprefs['user_dictionaries'] = [d.serialize() for d in self.all_user_dictionaries]
 
+<<<<<<< HEAD
     def add_user_words(self, words, langcode):
         for d in self.dictionaries.itervalues():
             if getattr(d.primary_locale, 'langcode', None) == langcode:
@@ -253,6 +316,8 @@ class Dictionaries(object):
                 for word in words:
                     d.obj.remove(word)
 
+=======
+>>>>>>> origin/sengian-custom
     def add_to_user_dictionary(self, name, word, locale):
         ud = self.user_dictionary(name)
         if ud is None:
@@ -260,10 +325,15 @@ class Dictionaries(object):
         wl = len(ud.words)
         if isinstance(word, (set, frozenset)):
             ud.words |= word
+<<<<<<< HEAD
             self.add_user_words(word, locale.langcode)
         else:
             ud.words.add((word, locale.langcode))
             self.add_user_words((word,), locale.langcode)
+=======
+        else:
+            ud.words.add((word, locale.langcode))
+>>>>>>> origin/sengian-custom
         if len(ud.words) > wl:
             self.save_user_dictionaries()
             try:
@@ -283,26 +353,39 @@ class Dictionaries(object):
         if changed:
             self.word_cache.pop((word, locale), None)
             self.save_user_dictionaries()
+<<<<<<< HEAD
             self.remove_user_words((word,), locale.langcode)
+=======
+>>>>>>> origin/sengian-custom
         return changed
 
     def remove_from_user_dictionary(self, name, words):
         changed = False
+<<<<<<< HEAD
         removals = defaultdict(set)
+=======
+>>>>>>> origin/sengian-custom
         keys = [(w, l.langcode) for w, l in words]
         for d in self.all_user_dictionaries:
             if d.name == name:
                 for key in keys:
                     if key in d.words:
                         d.words.discard(key)
+<<<<<<< HEAD
                         removals[key[1]].add(key[0])
+=======
+>>>>>>> origin/sengian-custom
                         changed = True
         if changed:
             for key in words:
                 self.word_cache.pop(key, None)
+<<<<<<< HEAD
             for langcode, words in removals.iteritems():
                 self.remove_user_words(words, langcode)
             self.save_user_dictionaries()
+=======
+                self.save_user_dictionaries()
+>>>>>>> origin/sengian-custom
         return changed
 
     def word_in_user_dictionary(self, word, locale):
@@ -361,16 +444,20 @@ class Dictionaries(object):
                             ans = d.obj.recognized(word)
                         except ValueError:
                             pass
+<<<<<<< HEAD
                     else:
                         ans = True
             if ans is False and self.negative_pat.match(word) is not None:
                 ans = True
+=======
+>>>>>>> origin/sengian-custom
             self.word_cache[key] = ans
         return ans
 
     def suggestions(self, word, locale=None):
         locale = locale or self.default_locale
         d = self.dictionary_for_locale(locale)
+<<<<<<< HEAD
         ans = ()
 
         def add_suggestion(w, ans):
@@ -416,3 +503,16 @@ def test_dictionaries():
 
 if __name__ == '__main__':
     test_dictionaries()
+=======
+        if d is not None:
+            try:
+                return d.obj.suggest(unicode(word))
+            except ValueError:
+                pass
+        return ()
+
+if __name__ == '__main__':
+    dictionaries = Dictionaries()
+    dictionaries.initialize()
+    print (dictionaries.recognized('recognized', parse_lang_code('en')))
+>>>>>>> origin/sengian-custom

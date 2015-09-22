@@ -8,8 +8,13 @@ __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
 import sys
 
+<<<<<<< HEAD
 from PyQt5.Qt import (
      QIcon, Qt, QSplitter, QListWidget, QTextBrowser, QPalette, QUrl, QMenu,
+=======
+from PyQt4.Qt import (
+     QIcon, Qt, QSplitter, QListWidget, QTextBrowser, QPalette, QMenu,
+>>>>>>> origin/sengian-custom
      QListWidgetItem, pyqtSignal, QApplication, QStyledItemDelegate)
 
 from calibre.ebooks.oeb.polish.check.base import WARN, INFO, DEBUG, ERROR, CRITICAL
@@ -81,10 +86,13 @@ class Check(QSplitter):
         if state is not None:
             self.restoreState(state)
 
+<<<<<<< HEAD
     def clear_at_startup(self):
         self.clear_help(_('Check has not been run'))
         self.items.clear()
 
+=======
+>>>>>>> origin/sengian-custom
     def context_menu(self, pos):
         m = QMenu()
         if self.items.count() > 0:
@@ -96,7 +104,11 @@ class Check(QSplitter):
         items = []
         for item in (self.items.item(i) for i in xrange(self.items.count())):
             msg = unicode(item.text())
+<<<<<<< HEAD
             msg = prefix_for_level(item.data(Qt.UserRole).level) + msg
+=======
+            msg = prefix_for_level(item.data(Qt.UserRole).toPyObject().level) + msg
+>>>>>>> origin/sengian-custom
             items.append(msg)
         if items:
             QApplication.clipboard().setText('\n'.join(items))

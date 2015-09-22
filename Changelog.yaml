@@ -20,8 +20,224 @@
 #   new recipes:
 #     - title: 
 
+<<<<<<< HEAD
 - version: 2.38.0
   date: 2015-09-11
+=======
+- version: 1.37.0
+  date: 2014-05-16
+
+  new features:
+    - title: "Edit Book: Live spell checking in the code view. Now spelling errors are highlighted in the code view for convenient correction as you type. This can be turned off via Preferences->Editor."
+
+    - title: "E-book viewer: When using the tap and hold gesture on a touchscreen, allow lookup  of the word currently under the finger in the dictionary or online."
+      tickets: [1318242]
+
+    - title: "Edit Book: Allow putting the editor into replace mode by pressing the Insert key"
+
+    - title: "Content server: Add more descriptive titles to the OPDS feeds, where possible."
+
+    - title: "Edit Book: Update the Table of Contents view automatically when the ncx file is edited."
+
+    - title: "Edit book: Insert tag button: Allow entering attributes along with the tag name to make it easy to repeatedly insert, for example, <span class='special'></span>."
+
+    - title: "Windows driver for Woxter Scriba 190."
+      tickets: [1317892]
+
+    - title: "Edit Book: Add an entry to the context menu of the preview panel to open external URLs when a link is right clicked on"
+
+  bug fixes:
+    - title: "Edit Book: Fix error in the Check Book tool when items in the opf have paths starting with a leading slash."
+      tickets: [1319378]
+
+    - title: "Book polishing: Fix publisher field in epub not being cleared when updating metadata."
+      tickets: [1319732]
+
+    - title: "Kobo driver: Update to handle changes to annotation processing in newer Kobo firmware."
+
+    - title: "DOCX Input: Handle docx files with index fields that have their field names incorrectly lower cased."
+      tickets: [1318670]
+
+    - title: "Edit book: Fix incorrect syntax highlighting on linux if the text contains non-BMP unicode characters."
+
+    - title: "Edit book: Fix regression that caused an error when trying to edit files with no defined syntax, such as plain .txt files."
+      tickets: [1318139]
+
+  improved recipes:
+    - Wall Street Journal 
+
+- version: 1.36.0
+  date: 2014-05-09
+
+  new features:
+    - title: "Edit Book: A new tool to filter style information (Tools->Filter style information). Useful to easily remove some CSS properties from the entire book."
+
+    - title: "DOCX Input: Add support for cross references. Cross references that are used to insert hyperlinks are now converted into hyperlinks in the output document. Features to insert paragraph/page numbers are not supported."
+
+    - title: "Add support for viewing kepub files in the calibre viewer, by treating them as plain epub files"
+
+    - title: "Edit book: In the Insert Link tool show a few words of text alongside the location anchor name, to make it easier to know what a location is"
+
+    - title: "Manage user dictionaries: Allow copying all selected words by right clicking them and choosing 'Copy to clipboard'."
+      tickets: [1315340]
+
+    - title: "Content server: Make .ibook format files available in OPDS feeds"
+
+    - title: "Edit book: Allow copying the list of errors from the Check Book tool to the clipboard by right clicking on the list of errors"
+
+    - title: "Book polishing: If the books being polished have an ORIGINAL_EPUB/AZW3 format, warn the user that polishing will use it as the source and ask for confirmation." 
+      tickets: [1316158]
+
+  bug fixes:
+    - title: "Fix metadata plugin to download metadata from OZON for website changes."
+      tickets: [1300383]
+
+    - title: "Subsetting embedded fonts: Fix an error when subsetting embedded fonts on windows if the username contains quotes or apostrophes."
+      tickets: [1316533]
+
+    - title: "Edit Book: Fix error when checking spelling if one of the files in the book declares an invalid (empty) language code."
+      tickets: [1316170]
+
+    - title: "Linux install: Have the calibre GUI programs redirect stdout and stderr to null when launched via .desktop files to workaround systems where the GUI launchers are broken."
+      tickets: [1315458]
+
+    - title: "Edit Book: Fix inserting a < in text that contains a colon causing a hang."
+
+    - title: "DOCX Input: Fix error when converting document with nested frames."
+      tickets: [1317543]
+
+  improved recipes:
+    - Various Japanese news sources
+    - National Geographic
+
+- version: 1.35.0
+  date: 2014-05-02
+
+  new features:
+    - title: "Edit Book: Redesign the syntax highlighter to improve performance for large documents and extended editing sessions."
+      tickets: [1314339]
+
+    - title: "Edit book: Make cursor movement smooth by not highlighting matching tags while the cursor is moving. Only match highlighting tags if the cursor stays still for a time."
+
+    - title: "Spellcheck dialog: Indicate whether a word is ignored in the Misspelled column"
+
+    - title: "Spellcheck dialog: Pressing Ctrl+C on the words list copies only selected words, regardless of current cell"
+
+    - title: "Add a copy to clipboard action to the context menu for the spell check dialog"
+
+    - title: "Edit book: Fix save button incorrectly disabled after a failed save"
+      tickets: [1313567]
+
+  bug fixes:
+    - title: "Edit Book: Fix an error when merging CSS stylesheets that contain @charset rules"
+
+    - title: "Edit book: Fix extra invalid entries being generated in the manifest when editing an AZW3 file that has no images."
+
+    - title: "Edit book: Fix a hang when editing an HTML or XML file with text of the form <abc: (i.e. a tag name with a trailing colon)."
+      tickets: [1314009]
+
+    - title: "Fix regression that prevented the ebook editor from starting on linux systems with locale set to 'C'"
+      tickets: [1315064] 
+
+    - title: "DOCX Input: Fix formatting of the generated Index when the index is complex, i.e. with lots of references to the same item, multiple level of sub-items, etc."
+
+    - title: "Smarten punctuation: Fix a double quote preceded by a hyphen at the end of a sentence (before the start of the next tag) being converted into an opening quote instead of closing quote."
+      tickets: [1286477]
+
+    - title: "News download: Fix very long URLs for links to pages causing errors on windows because of max path length restrictions."
+      tickets: [1313982]
+
+    - title: "Edit book: Fix saved search dialog causing high CPU usage"
+
+    - title: "Edit book: Fix importing of Lithuanian dictionary from OpenOffice, that does not specify a country code."
+      tickets: [1313315]
+
+  improved recipes:
+    - Ars Technica
+    - Daily Mirror
+    - Birmingham Evening Mail
+    - NRC - Next
+    - Private Eye
+    - NZZ
+
+- version: 1.34.0
+  date: 2014-04-25
+
+  new features:
+    - title: "E-book viewer: When in flow mode, handle swiping on the touchscreen differently. Swiping now scrolls line by line in flow mode instead of page by page. If you wish to scroll page by page in flow mode, tap instead of swiping."
+
+    - title: "Conversion: Preserve all guide entries that are of a type present in the EPUB 2.0 specification. These entries are used by newer Kindle readers to populate the Go To jump list"
+
+    - title: "When adding MOBI files if the author name is in LN, FN format, auto change it to FN LN format, as the MOBI format has no author sort field. This behavior can be disabled by setting Preferences->Tweaks->Author sort name algorithm to copy."
+      tickets: [1306748]
+
+    - title: "Spellcheck: When checking French text list all words that have the same stem as a single word. So j'aime and aime are listed as a single word."
+
+    - title: "Spell check: Add a context (right click) menu that allows for quick operations on all selected words"
+      tickets: [1309559]
+
+    - title: "Manage user dictionaries: Add a button to import a list of words in bulk into the user dictionary"
+
+    - title: "Spell check dialog: Allow sorting words case sensitively"
+
+  bug fixes:
+    - title: "EPUB Input: Fix incorrect handling of obfuscated fonts using the IDPF obfuscation algorithm when the epub unique identifier starts with urn:uuid"
+      tickets: [1311650]
+
+    - title: "Edit book: Fix obfuscated fonts in EPUB files not being handled correctly when editing the book (obfuscated fonts would get corrupted when making changes)."
+      tickets: [1311650]
+
+    - title: "Edit book: Fix a bug that caused spell checking to fail when using the builtin spanish dictionary"
+
+    - title: "Spell check: Fix replacing a word and then replacing the new word again not working without doing a refresh in between"
+
+    - title: "Spell check: Fix language declarations not being respected for nested tags."
+      tickets: [1310000]
+
+    - title: "Spell check: Fix 'Show next occurrence' sometimes showing the word in an incorrect location, for example in an attribute where spell check is not performed."
+
+    - title: "Allow import of dictionaries that deviate from the spec in minor ways"
+
+    - title: "Edit Book: Fix the Show next occurrence button in the spell check dialog sometimes failing to show next occurrence"
+
+    - title: "OS X: Detect the users default interface language correctly. Also fix parsing of ambiguous dates in mm/dd vs dd/mm formats, based on the users locale settings in OS X."
+
+  improved recipes:
+    - Hindustan Times
+
+- version: 1.33.0
+  date: 2014-04-18
+
+  new features:
+    - title: "Edit book: Add a tool to check spellings, access it via Tools->Check spelling"
+      type: major
+      description: "The calibre book editor now has builtin spellcheck. You can install new dictionaries via Preferences->Editor->Manage spelling dictionaries. It comes with builtin dictionaries for English and Spanish. You can add OpenOffice dictionaries (in .oxt format). The tool checks spellings in all HTML/OPF/NCX files in the book, taking into account any language declarations in the book, so that it will work correctly on multi-lingual books as well. The code is very new, so there may well be bugs. As you type spell checking is not yet implemented."
+
+    - title: "Kobo driver: Support firmware version 3.3"
+
+    - title: "Device driver for Tolino Vision on windows"
+
+  bug fixes:
+    - title: "Amazon metadata download: Fix Editorial Reviews not downloading into the comments section for some books"
+
+    - title: "DOCX Input: Fix some text highlighting colors in the DOCX file not being correctly translated during conversion."
+      ticket: [1308181]
+
+    - title: "Wireless device driver: Fix incorrect syncing behavior when book matching is run for a second time while connected. This happens when the user changes the library or selects 'Update cached metadata on device'."
+
+    - title: "Searching: Fix searching by date not using the system locale to interpret dd/mm vs mm/dd dates on windows"
+
+  improved recipes:
+    - Barrons 
+    - Creative Blog
+
+  new recipes:
+    - title: "Various new and updated Spanish news sources"
+      author: Marc Busque
+
+- version: 1.32.0
+  date: 2014-04-11
+>>>>>>> origin/sengian-custom
 
   new features:
     - title: "Add support for Kobo Touch 2"

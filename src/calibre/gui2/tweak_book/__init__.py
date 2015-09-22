@@ -47,6 +47,7 @@ d['saved_searches'] = []
 d['insert_tag_mru'] = ['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'td', 'tr']
 d['spell_check_case_sensitive_sort'] = False
 d['inline_spell_check'] = True
+<<<<<<< HEAD
 d['custom_themes'] = {}
 d['remove_unused_classes'] = False
 d['global_book_toolbar'] = [
@@ -71,6 +72,9 @@ d['auto_close_tags'] = True
 d['restore_book_state'] = True
 d['editor_accepts_drops'] = True
 d['toolbar_icon_size'] = 24
+=======
+
+>>>>>>> origin/sengian-custom
 del d
 
 ucase_map = {l:string.ascii_uppercase[i] for i, l in enumerate(string.ascii_lowercase)}
@@ -115,6 +119,7 @@ def set_book_locale(lang):
             raise ValueError('')
     except ValueError:
         dictionaries.default_locale = dictionaries.ui_locale
+<<<<<<< HEAD
     from calibre.gui2.tweak_book.editor.syntax.html import refresh_spell_check_status
     refresh_spell_check_status()
 
@@ -139,3 +144,5 @@ def update_mark_text_action(ed=None):
         has_mark = bool(ed.selected_text) or not ed.has_marked_text
     ac = actions['mark-selected-text']
     ac.setText(ac.default_text if has_mark else _('Unmark marked text'))
+=======
+>>>>>>> origin/sengian-custom

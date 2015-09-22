@@ -153,6 +153,7 @@ python setup.py fetch --all --missing-checksum-ok build --enable-all-extensions 
 
 Build requirements
 -------------------
+<<<<<<< HEAD
 
 Install perl and ruby (needed to build openssl and qt):
 Perl: http://www.activestate.com/activeperl
@@ -167,6 +168,22 @@ and put it in ~/sw/bin (which must be in PATH)
 OpenSSL
 --------
 
+=======
+
+Install perl and ruby (needed to build openssl and qt):
+Perl: http://www.activestate.com/activeperl
+Ruby: http://rubyinstaller.org/
+
+Put both perl.exe and ruby.exe in the PATH
+
+Get nasm.exe from (needed for openssl and libjpeg-turbo)
+http://www.nasm.us/pub/nasm/releasebuilds/2.11/win32/nasm-2.11-win32.zip
+and put it in ~/sw/bin (which must be in PATH)
+
+OpenSSL
+--------
+
+>>>>>>> origin/sengian-custom
 Download and untar the openssl tarball.
 To install use a private prefix: --prefix=C:/cygwin64/home/kovid/sw/private/openssl
 
@@ -175,11 +192,25 @@ environment.
 
 For 32-bit::
     perl Configure VC-WIN32 no-asm enable-static-engine --prefix=C:/cygwin64/home/kovid/sw/private/openssl
+<<<<<<< HEAD
     ms\do_ms.bat && nmake -f ms\ntdll.mak && nmake -f ms\ntdll.mak test && nmake -f ms\ntdll.mak install
 
 For 64-bit::
     perl Configure VC-WIN64A no-asm enable-static-engine --prefix=C:/cygwin64/home/kovid/sw/private/openssl
     ms\do_win64a.bat && nmake -f ms\ntdll.mak && nmake -f ms\ntdll.mak test && nmake -f ms\ntdll.mak install
+=======
+    ms\do_ms.bat
+    nmake -f ms\ntdll.mak
+    nmake -f ms\ntdll.mak test
+    nmake -f ms\ntdll.mak install
+
+For 64-bit::
+    perl Configure VC-WIN64A no-asm enable-static-engine --prefix=C:/cygwin64/home/kovid/sw/private/openssl
+    ms\do_win64a.bat
+    nmake -f ms\ntdll.mak
+    nmake -f ms\ntdll.mak test
+    nmake -f ms\ntdll.mak install
+>>>>>>> origin/sengian-custom
 
 ICU
 -------
@@ -196,9 +227,12 @@ cd to <ICU>\source::
     dos2unix runConfigureICU
     bash ./runConfigureICU Cygwin/MSVC
     make
+<<<<<<< HEAD
 
 Make sure the folder containing the ICU dlls is in the PATH. ($SW/private/icu/source/lib)
 This is needed for building Qt.
+=======
+>>>>>>> origin/sengian-custom
 
 zlib
 ------
@@ -419,7 +453,11 @@ int projectType = MULTITHREADEDDLL;
 
 Open configure.sln and build it to create configure.exe
 
+<<<<<<< HEAD
 Run configure.exe set 32/64 bit disable X11 and OpenMP and click the Edit
+=======
+Run configure.exe set 32/64 bit disable X11 and OpenMPI and click the Edit
+>>>>>>> origin/sengian-custom
 magick-baseconfig.h button
 
 Undefine ProvideDllMain 
@@ -474,6 +512,7 @@ Qt
 --------
 Download Qt sourcecode (.zip) from: http://download.qt-project.org/official_releases/qt/
 
+<<<<<<< HEAD
     * Extract it to C:\qt (the default location for building $SW/build) does
       not work as Qt's build system generates paths that are too long for
       windows when used from there.
@@ -503,6 +542,15 @@ Download Qt sourcecode (.zip) from: http://download.qt-project.org/official_rele
 
 --- qtbase/src/corelib/plugin/qsystemlibrary.cpp	2011-02-22 05:04:00.000000000 -0700
 +++ qtbase/src/corelib/plugin/qsystemlibrary.cpp	2011-04-25 20:53:13.635247466 -0600
+=======
+Qt uses its own routine to locate and load "system libraries" including the
+openssl libraries needed for "Get Books". This means that we have to apply the
+following patch to have Qt load the openssl libraries bundled with calibre:
+
+
+--- src/corelib/plugin/qsystemlibrary.cpp	2011-02-22 05:04:00.000000000 -0700
++++ src/corelib/plugin/qsystemlibrary.cpp	2011-04-25 20:53:13.635247466 -0600
+>>>>>>> origin/sengian-custom
 @@ -110,7 +110,7 @@ HINSTANCE QSystemLibrary::load(const wch
  
  #if !defined(QT_BOOTSTRAPPED)
@@ -512,6 +560,7 @@ Download Qt sourcecode (.zip) from: http://download.qt-project.org/official_rele
  #endif
      searchOrder << qSystemDirectory();
  
+<<<<<<< HEAD
 -no-plugin-manifests is needed so that loading the plugins does not fail looking for the CRT assembly
 
 Now, run configure and make (we have to make sure the windows perl and not cygwin perl is used)::
@@ -523,6 +572,16 @@ Now, run configure and make (we have to make sure the windows perl and not cygwi
     rm -rf $SW/private/qt && nmake install
 
 Add $SW/private/qt/bin to PATH
+=======
+
+Now, run configure and make:
+
+-no-plugin-manifests is needed so that loading the plugins does not fail looking for the CRT assembly
+
+    ./configure.exe -ltcg -opensource -release -qt-zlib -qt-libmng -qt-libpng -qt-libtiff -qt-libjpeg -release -platform win32-msvc2008 -no-qt3support -webkit -xmlpatterns -no-phonon -no-style-plastique -no-style-cleanlooks -no-style-motif -no-style-cde -no-declarative -no-scripttools -no-audio-backend -no-multimedia -no-dbus -no-openvg -no-opengl -no-qt3support -confirm-license -nomake examples -nomake demos -nomake docs -nomake tools -no-plugin-manifests -openssl -I $OPENSSL_DIR/include -L $OPENSSL_DIR/lib && nmake
+
+Add the path to the bin folder inside the Qt dir to your system PATH.
+>>>>>>> origin/sengian-custom
 
 SIP
 -----
@@ -531,14 +590,24 @@ Available from: http://www.riverbankcomputing.co.uk/software/sip/download ::
 
     python configure.py -p win32-msvc2008 && nmake && nmake install
 
+<<<<<<< HEAD
 PyQt5
+=======
+PyQt4
+>>>>>>> origin/sengian-custom
 ----------
 
 Compiling instructions::
 
+<<<<<<< HEAD
     rm -rf build && mkdir build && cd build
     python ../configure.py -c -j5 --no-designer-plugin --no-qml-plugin --verbose --confirm-license
     nmake && rm -rf /cygdrive/c/Python27/Lib/site-packages/PyQt5 && nmake install
+=======
+    python configure.py -c -j5 -e QtCore -e QtGui -e QtSvg -e QtNetwork -e QtWebKit -e QtXmlPatterns --verbose --confirm-license
+    nmake
+    nmake install
+>>>>>>> origin/sengian-custom
 
 
 libimobiledevice

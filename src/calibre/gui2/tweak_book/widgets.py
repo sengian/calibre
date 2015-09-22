@@ -10,6 +10,7 @@ import os, textwrap, unicodedata
 from itertools import izip
 from collections import OrderedDict
 
+<<<<<<< HEAD
 from PyQt5.Qt import (
     QGridLayout, QLabel, QLineEdit, QVBoxLayout, QFormLayout, QHBoxLayout,
     QToolButton, QIcon, QApplication, Qt, QWidget, QPoint, QSizePolicy,
@@ -23,6 +24,19 @@ from calibre.ebooks.oeb.polish.utils import lead_text, guess_type
 from calibre.gui2 import error_dialog, choose_files, choose_save_file, info_dialog, choose_images
 from calibre.gui2.tweak_book import tprefs, current_container
 from calibre.gui2.widgets2 import Dialog as BaseDialog
+=======
+from PyQt4.Qt import (
+    QDialog, QDialogButtonBox, QGridLayout, QLabel, QLineEdit, QVBoxLayout,
+    QFormLayout, QHBoxLayout, QToolButton, QIcon, QApplication, Qt, QWidget,
+    QPoint, QSizePolicy, QPainter, QStaticText, pyqtSignal, QTextOption,
+    QAbstractListModel, QModelIndex, QVariant, QStyledItemDelegate, QStyle,
+    QListView, QTextDocument, QSize, QComboBox, QFrame, QCursor, QCheckBox)
+
+from calibre import prepare_string_for_xml
+from calibre.ebooks.oeb.polish.utils import lead_text
+from calibre.gui2 import error_dialog, choose_files, choose_save_file, NONE, info_dialog
+from calibre.gui2.tweak_book import tprefs
+>>>>>>> origin/sengian-custom
 from calibre.utils.icu import primary_sort_key, sort_key, primary_contains
 from calibre.utils.matcher import get_char, Matcher
 from calibre.gui2.complete2 import EditWithComplete
@@ -546,12 +560,15 @@ class NamesModel(QAbstractListModel):
             if text == name:
                 return i
 
+<<<<<<< HEAD
     def name_for_index(self, index):
         try:
             return self.items[index.row()][0]
         except IndexError:
             pass
 
+=======
+>>>>>>> origin/sengian-custom
 def create_filterable_names_list(names, filter_text=None, parent=None, model=NamesModel):
     nl = QListView(parent)
     nl.m = m = model(names, parent=nl)
@@ -975,6 +992,7 @@ class FilterCSS(Dialog):  # {{{
 
 # }}}
 
+<<<<<<< HEAD
 # Add Cover {{{
 
 class CoverView(QWidget):
@@ -1177,3 +1195,9 @@ class PlainTextEdit(QPlainTextEdit):  # {{{
 if __name__ == '__main__':
     app = QApplication([])
     AddCover.test()
+=======
+
+if __name__ == '__main__':
+    app = QApplication([])
+    FilterCSS.test()
+>>>>>>> origin/sengian-custom

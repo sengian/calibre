@@ -125,7 +125,11 @@ class ConnectionListener(Thread):
                         getattr(self.driver, 'listen_socket', None) is not None:
                 ans = select.select((self.driver.listen_socket,), (), (), 0)
                 if len(ans[0]) > 0:
+<<<<<<< HEAD
                     # timeout in 100 ms to detect rare case where the socket goes
+=======
+                    # timeout in 10 ms to detect rare case where the socket goes
+>>>>>>> origin/sengian-custom
                     # away between the select and the accept
                     try:
                         self.driver._debug('attempt to open device socket')
@@ -537,6 +541,10 @@ class SMART_DEVICE_APP(DeviceConfig, DevicePlugin):
         except:
             self._close_device_socket()
             raise
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/sengian-custom
 
     def _read_string_from_net(self):
         data = bytes(0)
@@ -669,6 +677,7 @@ class SMART_DEVICE_APP(DeviceConfig, DevicePlugin):
                                'totalBooks': total_books,
                                'willStreamBooks': True,
                                'willStreamBinary' : True,
+<<<<<<< HEAD
                                'wantsSendOkToSendbook' : self.can_send_ok_to_sendbook,
                                'canSupportLpathChanges': True},
                           print_debug_info=False,
@@ -677,6 +686,11 @@ class SMART_DEVICE_APP(DeviceConfig, DevicePlugin):
         if self.can_send_ok_to_sendbook:
             lpath = result.get('lpath', lpath)
             book_metadata.lpath = lpath
+=======
+                               'wantsSendOkToSendbook' : self.can_send_ok_to_sendbook},
+                          print_debug_info=False,
+                          wait_for_response=self.can_send_ok_to_sendbook)
+>>>>>>> origin/sengian-custom
         self._set_known_metadata(book_metadata)
         pos = 0
         failed = False
@@ -1065,6 +1079,7 @@ class SMART_DEVICE_APP(DeviceConfig, DevicePlugin):
             self._debug('Cache uses lpaths', self.client_cache_uses_lpaths)
             self.can_send_ok_to_sendbook = result.get('canSendOkToSendbook', False)
             self._debug('Can send OK to sendbook', self.can_send_ok_to_sendbook)
+<<<<<<< HEAD
             self.can_accept_library_info = result.get('canAcceptLibraryInfo', False)
             self._debug('Can accept library info', self.can_accept_library_info)
             self.will_ask_for_update_books = result.get('willAskForUpdateBooks', False)
@@ -1073,6 +1088,8 @@ class SMART_DEVICE_APP(DeviceConfig, DevicePlugin):
                                     result.get('setTempMarkWhenReadInfoSynced', False)
             self._debug('Will set temp mark when syncing read',
                                     self.set_temp_mark_when_syncing_read)
+=======
+>>>>>>> origin/sengian-custom
 
             if not self.settings().extra_customization[self.OPT_USE_METADATA_CACHE]:
                 self.client_can_use_metadata_cache = False
@@ -1417,9 +1434,12 @@ class SMART_DEVICE_APP(DeviceConfig, DevicePlugin):
                     except:
                         self._debug('failed to set local copy of _last_read_date_')
                         traceback.print_exc()
+<<<<<<< HEAD
         # Write the cache here so that if we are interrupted on disconnect then the
         # almost-latest info will be available.
         self._write_metadata_cache()
+=======
+>>>>>>> origin/sengian-custom
 
     @synchronous('sync_lock')
     def eject(self):

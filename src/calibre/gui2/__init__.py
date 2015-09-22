@@ -882,7 +882,21 @@ def load_builtin_fonts():
 def setup_gui_option_parser(parser):
     if islinux:
         parser.add_option('--detach', default=False, action='store_true',
+<<<<<<< HEAD
                           help=_('Detach from the controlling terminal, if any (linux only)'))
+=======
+                          help='Detach from the controlling terminal, if any (linux only)')
+
+def detach_gui():
+    if islinux and not DEBUG:
+        # Detach from the controlling process.
+        if os.fork() != 0:
+            raise SystemExit(0)
+        os.setsid()
+        so, se = file(os.devnull, 'a+'), file(os.devnull, 'a+', 0)
+        os.dup2(so.fileno(), sys.__stdout__.fileno())
+        os.dup2(se.fileno(), sys.__stderr__.fileno())
+>>>>>>> origin/sengian-custom
 
 class Application(QApplication):
 

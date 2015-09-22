@@ -64,7 +64,11 @@ class KOBO(USBMS):
     gui_name = 'Kobo Reader'
     description = _('Communicate with the Kobo Reader')
     author = 'Timothy Legge and David Forrester'
+<<<<<<< HEAD
     version = (2, 1, 11)
+=======
+    version = (2, 1, 7)
+>>>>>>> origin/sengian-custom
 
     dbversion = 0
     fwversion = 0
@@ -1269,9 +1273,13 @@ class KOBOTOUCH(KOBO):
     min_dbversion_activity          = 77
     min_dbversion_keywords          = 82
 
+<<<<<<< HEAD
     max_supported_fwversion         = (3, 17, 3)
     # The following document firwmare versions where new function or devices were added.
     # Not all are used, but this feels a good place to record it.
+=======
+    max_supported_fwversion         = (3, 3, 1)
+>>>>>>> origin/sengian-custom
     min_fwversion_shelves           = (2, 0, 0)
     min_fwversion_images_on_sdcard  = (2, 4, 1)
     min_fwversion_images_tree       = (2, 9, 0)  # Cover images stored in tree under .kobo-images
@@ -1396,10 +1404,17 @@ class KOBOTOUCH(KOBO):
 #                          ' - N3_LIBRARY_SHELF.parsed': [(40,60),0, 52,],
                           }
     GLO_COVER_FILE_ENDINGS = {      # Glo and Aura share resolution, so the image sizes should be the same.
+<<<<<<< HEAD
                           ' - N3_FULL.parsed':[(758,1024),0, 200,True,],           # Used for screensaver, home screen
                           ' - N3_LIBRARY_FULL.parsed':[(355,479),0, 200,False,],   # Used for Details screen before FW2.8.1, then for current book tile on home screen
                           ' - N3_LIBRARY_GRID.parsed':[(149,201),0, 200,False,],   # Used for library lists
                           ' - AndroidBookLoadTablet_Aspect.parsed':[(355,479), 88, 200,False,],   # Used for Details screen from FW2.8.1
+=======
+                          ' - N3_FULL.parsed':[(758,1024),0, 99,True,],           # Used for screensaver, home screen
+                          ' - N3_LIBRARY_FULL.parsed':[(355,479),0, 99,False,],   # Used for Details screen before FW2.8.1, then for current book tile on home screen
+                          ' - N3_LIBRARY_GRID.parsed':[(149,201),0, 99,False,],   # Used for library lists
+                          ' - AndroidBookLoadTablet_Aspect.parsed':[(355,479), 88, 99,False,],   # Used for Details screen from FW2.8.1
+>>>>>>> origin/sengian-custom
                           }
     AURA_HD_COVER_FILE_ENDINGS = {
                           ' - N3_FULL.parsed':        [(1080,1440), 0, 200,True,],  # Used for screensaver, home screen

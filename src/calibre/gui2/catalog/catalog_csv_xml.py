@@ -78,7 +78,12 @@ class PluginWidget(QWidget):
         gprefs.set(self.name + '_db_fields_sort_order', {x:i for i, x in enumerate(all_fields)})
 
         # Return a dictionary with current options for this widget
+<<<<<<< HEAD
         if len(fields):
             return {'fields':fields}
+=======
+        if len(self.db_fields.selectedItems()):
+            return {'fields':[unicode(i.text()) for i in self.db_fields.selectedItems()]}
+>>>>>>> origin/sengian-custom
         else:
             return {'fields':['all']}

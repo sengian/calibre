@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env python2
+=======
+#!/usr/bin/env python
+>>>>>>> origin/sengian-custom
 # vim:fileencoding=utf-8
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
@@ -9,12 +13,18 @@ __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 import sys
 from collections import defaultdict
 
+<<<<<<< HEAD
 from calibre import replace_entities
+=======
+>>>>>>> origin/sengian-custom
 from calibre.spell.break_iterator import split_into_words, index_of
 from calibre.spell.dictionary import parse_lang_code
 from calibre.ebooks.oeb.base import barename
 from calibre.ebooks.oeb.polish.container import OPF_NAMESPACES, get_container
+<<<<<<< HEAD
 from calibre.ebooks.oeb.polish.parsing import parse
+=======
+>>>>>>> origin/sengian-custom
 from calibre.ebooks.oeb.polish.toc import find_existing_toc
 
 _patterns = None
@@ -88,7 +98,10 @@ def add_words(text, node, words, file_name, locale, node_item):
                     sword = sword[len(elided_prefix):]
             loc = Location(file_name, elided_prefix, word, node, node_item)
             words[(sword, locale)].append(loc)
+<<<<<<< HEAD
             words[None] += 1
+=======
+>>>>>>> origin/sengian-custom
 
 def add_words_from_attr(node, attr, words, file_name, locale):
     text = node.get(attr, None)
@@ -98,6 +111,7 @@ def add_words_from_attr(node, attr, words, file_name, locale):
 def add_words_from_text(node, attr, words, file_name, locale):
     add_words(getattr(node, attr), node, words, file_name, locale, (False, attr))
 
+<<<<<<< HEAD
 def add_words_from_escaped_html(text, words, file_name, node, attr, locale):
     text = replace_entities(text)
     root = parse('<html><body><div>%s</div></body></html>' % text, decoder=lambda x:x.decode('utf-8'))
@@ -110,6 +124,8 @@ def add_words_from_escaped_html(text, words, file_name, node, attr, locale):
             loc.location_node, loc.node_item = node, (False, attr)
         words[k].extend(locs)
 
+=======
+>>>>>>> origin/sengian-custom
 _opf_file_as = '{%s}file-as' % OPF_NAMESPACES['opf']
 
 opf_spell_tags = {'title', 'creator', 'subject', 'description', 'publisher'}
@@ -120,10 +136,14 @@ opf_spell_tags = {'title', 'creator', 'subject', 'description', 'publisher'}
 def read_words_from_opf(root, words, file_name, book_locale):
     for tag in root.iterdescendants('*'):
         if tag.text is not None and barename(tag.tag) in opf_spell_tags:
+<<<<<<< HEAD
             if barename(tag.tag) == 'description':
                 add_words_from_escaped_html(tag.text, words, file_name, tag, 'text', book_locale)
             else:
                 add_words_from_text(tag, 'text', words, file_name, book_locale)
+=======
+            add_words_from_text(tag, 'text', words, file_name, book_locale)
+>>>>>>> origin/sengian-custom
         add_words_from_attr(tag, _opf_file_as, words, file_name, book_locale)
 
 ncx_spell_tags = {'text'}
@@ -182,9 +202,14 @@ def get_checkable_file_names(container):
         file_names.append(toc)
     return file_names, toc
 
+<<<<<<< HEAD
 def get_all_words(container, book_locale, get_word_count=False):
     words = defaultdict(list)
     words[None] = 0
+=======
+def get_all_words(container, book_locale):
+    words = defaultdict(list)
+>>>>>>> origin/sengian-custom
     file_names, toc = get_checkable_file_names(container)
     for file_name in file_names:
         if not container.exists(file_name):
@@ -196,11 +221,16 @@ def get_all_words(container, book_locale, get_word_count=False):
             read_words_from_ncx(root, words, file_name, book_locale)
         else:
             read_words_from_html(root, words, file_name, book_locale)
+<<<<<<< HEAD
     count = words.pop(None)
     ans = {k:group_sort(v) for k, v in words.iteritems()}
     if get_word_count:
         return count, ans
     return ans
+=======
+
+    return {k:group_sort(v) for k, v in words.iteritems()}
+>>>>>>> origin/sengian-custom
 
 def merge_locations(locs1, locs2):
     return group_sort(locs1 + locs2)

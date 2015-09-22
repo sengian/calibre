@@ -768,7 +768,11 @@ Miscellaneous
   :local:
 
 
+<<<<<<< HEAD
 I want calibre to download news from my favorite news website.
+=======
+I want |app| to download news from my favorite news website.
+>>>>>>> origin/sengian-custom
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are reasonably proficient with computers, you can teach calibre to download news from any website of your choosing. To learn how to do this see :ref:`news`.
 

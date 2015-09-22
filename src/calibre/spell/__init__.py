@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env python2
+=======
+#!/usr/bin/env python
+>>>>>>> origin/sengian-custom
 # vim:fileencoding=utf-8
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
@@ -6,6 +10,7 @@ from __future__ import (unicode_literals, division, absolute_import,
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
+<<<<<<< HEAD
 import cPickle
 from collections import namedtuple
 
@@ -37,5 +42,7 @@ def parse_lang_code(raw):
         else:
             cc = ccodemap.get(q, None)
     return DictionaryLocale(lc, cc)
+=======
+>>>>>>> origin/sengian-custom
 
 

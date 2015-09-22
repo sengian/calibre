@@ -14,12 +14,20 @@ from setup import Command, __appname__, __version__, require_git_master
 from setup.parallel_build import parallel_check_output
 
 def qt_sources():
+<<<<<<< HEAD
     qtdir = '/usr/src/qt5'
     j = partial(os.path.join, qtdir)
     return list(map(j, [
             'qtbase/src/gui/kernel/qplatformtheme.cpp',
             'qtbase/src/widgets/dialogs/qcolordialog.cpp',
             'qtbase/src/widgets/dialogs/qfontdialog.cpp',
+=======
+    # QT5XX: Change this
+    qtdir = '/usr/src/qt4'
+    j = partial(os.path.join, qtdir)
+    return list(map(j, [
+            'gui/widgets/qdialogbuttonbox.cpp',
+>>>>>>> origin/sengian-custom
     ]))
 
 class POT(Command):  # {{{
@@ -514,6 +522,12 @@ class ISO3166(ISO639):  # {{{
             name_map[two] = x.get('name')
             if three:
                 three_map[three] = two
+<<<<<<< HEAD
         x = {'names':name_map, 'codes':frozenset(codes), 'three_map':three_map}
         cPickle.dump(x, open(dest, 'wb'), -1)
+=======
+        from cPickle import dump
+        x = {'names':name_map, 'codes':frozenset(codes), 'three_map':three_map}
+        dump(x, open(dest, 'wb'), -1)
+>>>>>>> origin/sengian-custom
 # }}}

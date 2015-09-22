@@ -9,12 +9,19 @@ from base64 import b64encode
 from functools import partial
 from future_builtins import map
 
+<<<<<<< HEAD
 from PyQt5.Qt import (
     QSize, QSizePolicy, QUrl, Qt, pyqtProperty, QPainter, QPalette, QBrush,
     QDialog, QColor, QPoint, QImage, QRegion, QIcon, QAction, QMenu,
     pyqtSignal, QApplication, pyqtSlot, QKeySequence)
 from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 from PyQt5.QtWebKit import QWebSettings, QWebElement
+=======
+from PyQt4.Qt import (QSize, QSizePolicy, QUrl, Qt, pyqtProperty,
+        QPainter, QPalette, QBrush, QDialog, QColor, QPoint, QImage, QRegion,
+        QIcon, QAction, QMenu, QString, pyqtSignal, QApplication, pyqtSlot)
+from PyQt4.QtWebKit import QWebPage, QWebView, QWebSettings, QWebElement
+>>>>>>> origin/sengian-custom
 
 from calibre.gui2.viewer.flip import SlideFlip
 from calibre.gui2.shortcuts import Shortcuts
@@ -31,7 +38,11 @@ from calibre.gui2.viewer.inspector import WebInspector
 from calibre.gui2.viewer.gestures import GestureHandler
 from calibre.gui2.viewer.footnote import Footnotes
 from calibre.ebooks.oeb.display.webview import load_html
+<<<<<<< HEAD
 from calibre.constants import isxp, iswindows, DEBUG, __version__
+=======
+from calibre.constants import isxp, iswindows, DEBUG
+>>>>>>> origin/sengian-custom
 # }}}
 
 def apply_settings(settings, opts):
@@ -350,11 +361,14 @@ class Document(QWebPage):  # {{{
     @pyqtSlot(str)
     def debug(self, msg):
         prints(unicode(msg))
+<<<<<<< HEAD
 
     @pyqtSlot(int)
     def jump_to_cfi_finished(self, job_id):
         for l in self.jump_to_cfi_listeners:
             l(job_id)
+=======
+>>>>>>> origin/sengian-custom
 
     def reference_mode(self, enable):
         self.javascript(('enter' if enable else 'leave')+'_reference_mode()')
@@ -394,7 +408,11 @@ class Document(QWebPage):  # {{{
         return ans
 
     def javaScriptConsoleMessage(self, msg, lineno, msgid):
+<<<<<<< HEAD
         if DEBUG or self.debug_javascript:
+=======
+        if DEBUG:
+>>>>>>> origin/sengian-custom
             prints(msg)
 
     def javaScriptAlert(self, frame, msg):
@@ -752,7 +770,11 @@ class DocumentView(QWebView):  # {{{
                 menu.addAction(ac.icon(), '%s [%s]' % (unicode(ac.text()), ','.join(self.shortcuts.get_shortcuts(sc))), ac.trigger)
 
         if from_touch and self.manager is not None:
+<<<<<<< HEAD
             word = unicode(mf.evaluateJavaScript('window.calibre_utils.word_at_point(%f, %f)' % (ev.pos().x(), ev.pos().y())) or '')
+=======
+            word = unicode(mf.evaluateJavaScript('window.calibre_utils.word_at_point(%f, %f)' % (ev.pos().x(), ev.pos().y())).toString())
+>>>>>>> origin/sengian-custom
             if word:
                 menu.addAction(self.dictionary_action.icon(), _('Lookup %s in the dictionary') % word, partial(self.manager.lookup, word))
                 menu.addAction(self.search_online_action.icon(), _('Search for %s online') % word, partial(self.do_search_online, word))
@@ -828,9 +850,13 @@ class DocumentView(QWebView):  # {{{
             self.do_search_online(t)
 
     def do_search_online(self, text):
+<<<<<<< HEAD
         url = self.document.search_online_url.replace('{text}', QUrl().toPercentEncoding(text))
         if not isinstance(url, bytes):
             url = url.encode('utf-8')
+=======
+        url = 'https://www.google.com/search?q=' + QUrl().toPercentEncoding(text)
+>>>>>>> origin/sengian-custom
         open_url(QUrl.fromEncoded(url))
 
     def set_manager(self, manager):

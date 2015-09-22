@@ -223,7 +223,45 @@ def dnd_get_image(md, image_exts=IMAGE_EXTENSIONS):
         if not p.isNull():
             return p, None
 
+<<<<<<< HEAD
     # No local images, look for remote ones
+=======
+    # No image, look for a URL pointing to an image
+    if md.hasUrls():
+        urls = [unicode(u.toString()) for u in
+                md.urls()]
+        purls = [urlparse(u) for u in urls]
+        # First look for a local file
+        images = [u2p(xu) for xu in purls if xu.scheme in ('', 'file')]
+        images = [xi for xi in images if
+                posixpath.splitext(urllib.unquote(xi))[1][1:].lower() in
+                image_exts]
+        images = [xi for xi in images if os.path.exists(xi)]
+        p = QPixmap()
+        for path in images:
+            try:
+                with open(path, 'rb') as f:
+                    p.loadFromData(f.read())
+            except:
+                continue
+            if not p.isNull():
+                return p, None
+
+        # No local images, look for remote ones
+
+        # First, see if this is from Firefox
+        rurl, fname = get_firefox_rurl(md, image_exts)
+
+        if rurl and fname:
+            return rurl, fname
+        # Look through all remaining URLs
+        remote_urls = [xu for xu in purls if xu.scheme in ('http', 'https',
+            'ftp') and posixpath.splitext(xu.path)[1][1:].lower() in image_exts]
+        if remote_urls:
+            rurl = remote_urls[0]
+            fname = posixpath.basename(urllib.unquote(rurl.path))
+            return urlunparse(rurl), fname
+>>>>>>> origin/sengian-custom
 
     # First, see if this is from Firefox
     rurl, fname = get_firefox_rurl(md, image_exts)

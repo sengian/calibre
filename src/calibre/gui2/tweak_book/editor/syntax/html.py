@@ -15,10 +15,15 @@ from PyQt5.Qt import QFont, QTextBlockUserData, QTextCharFormat
 from calibre.ebooks.oeb.polish.spell import html_spell_tags, xml_spell_tags
 from calibre.spell.dictionary import parse_lang_code
 from calibre.spell.break_iterator import split_into_words_and_positions
+<<<<<<< HEAD
 from calibre.gui2.tweak_book import dictionaries, tprefs, verify_link
 from calibre.gui2.tweak_book.editor import (
     syntax_text_char_format, SPELL_PROPERTY, SPELL_LOCALE_PROPERTY,
     store_locale, LINK_PROPERTY, TAG_NAME_PROPERTY)
+=======
+from calibre.gui2.tweak_book import dictionaries, tprefs
+from calibre.gui2.tweak_book.editor import SyntaxTextCharFormat, SPELL_PROPERTY
+>>>>>>> origin/sengian-custom
 from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter, run_loop
 from calibre.gui2.tweak_book.editor.syntax.css import (
     create_formats as create_css_formats, state_map as css_state_map, CSSState, CSSUserData)
@@ -53,6 +58,7 @@ TagStart = namedtuple('TagStart', 'offset prefix name closing is_start')
 TagEnd = namedtuple('TagEnd', 'offset self_closing is_start')
 Attr = namedtuple('Attr', 'offset type data')
 
+<<<<<<< HEAD
 LINK_ATTRS = frozenset(('href', 'src', 'poster', 'xlink:href'))
 
 do_spell_check = False
@@ -211,6 +217,113 @@ def close_tag(state, name):
         if tag.lang is not None:
             state.current_lang = tag.lang
             break
+=======
+class Tag(object):
+
+    __slots__ = ('name', 'bold', 'italic', 'lang')
+
+    def __init__(self, name, bold=None, italic=None):
+        self.name = name
+        self.bold = name in bold_tags if bold is None else bold
+        self.italic = name in italic_tags if italic is None else italic
+        self.lang = None
+
+    def __eq__(self, other):
+        return self.name == getattr(other, 'name', None) and self.lang == getattr(other, 'lang', False)
+
+    def copy(self):
+        ans = Tag(self.name, self.bold, self.italic)
+        ans.lang = self.lang
+        return ans
+
+class State(object):
+
+    __slots__ = (
+        'tag_being_defined', 'tags', 'is_bold', 'is_italic', 'current_lang',
+        'parse', 'css_formats', 'sub_parser_state', 'default_lang', 'attribute_name',)
+
+    def __init__(self):
+        self.tags = []
+        self.is_bold = self.is_italic = False
+        self.tag_being_defined = self.current_lang =  self.css_formats = \
+            self.sub_parser_state = self.default_lang = self.attribute_name = None
+        self.parse = NORMAL
+
+    def copy(self):
+        ans = State()
+        for x in self.__slots__:
+            setattr(ans, x, getattr(self, x))
+        self.tags = [x.copy() for x in self.tags]
+        if self.tag_being_defined is not None:
+            self.tag_being_defined = self.tag_being_defined.copy()
+        if self.sub_parser_state is not None:
+            ans.sub_parser_state = self.sub_parser_state.copy()
+        return ans
+
+    def __eq__(self, other):
+        return (
+            self.parse == getattr(other, 'parse', -1) and
+            self.sub_parser_state == getattr(other, 'sub_parser_state', -1) and
+            self.tag_being_defined == getattr(other, 'tag_being_defined', False) and
+            self.attribute_name == getattr(other, 'attribute_name', False) and
+            self.tags == getattr(other, 'tags', None)
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def open_tag(self, name):
+        self.tag_being_defined = Tag(name)
+
+    def close_tag(self, name):
+        removed_tags = []
+        for tag in reversed(self.tags):
+            removed_tags.append(tag)
+            if tag.name == name:
+                break
+        else:
+            return  # No matching open tag found, ignore the closing tag
+        # Remove all tags upto the matching open tag
+        self.tags = self.tags[:-len(removed_tags)]
+        self.sub_parser_state = None
+        # Check if we should still be bold or italic
+        if self.is_bold:
+            self.is_bold = False
+            for tag in reversed(self.tags):
+                if tag.bold:
+                    self.is_bold = True
+                    break
+        if self.is_italic:
+            self.is_italic = False
+            for tag in reversed(self.tags):
+                if tag.italic:
+                    self.is_italic = True
+                    break
+        # Set the current language to the first lang attribute in a still open tag
+        self.current_lang = None
+        for tag in reversed(self.tags):
+            if tag.lang is not None:
+                self.current_lang = tag.lang
+                break
+
+    def finish_opening_tag(self, cdata_tags):
+        self.parse = NORMAL
+        if self.tag_being_defined is None:
+            return
+        t, self.tag_being_defined = self.tag_being_defined, None
+        self.tags.append(t)
+        self.is_bold = self.is_bold or t.bold
+        self.is_italic = self.is_italic or t.italic
+        self.current_lang = t.lang or self.current_lang
+        if t.name in cdata_tags:
+            self.parse = CSS if t.name == 'style' else CDATA
+            self.sub_parser_state = None
+
+    def __repr__(self):
+        return '<State %s is_bold=%s is_italic=%s current_lang=%s>' % (
+            '->'.join(x.name for x in self.tags), self.is_bold, self.is_italic, self.current_lang)
+    __str__ = __repr__
+>>>>>>> origin/sengian-custom
 
 class HTMLUserData(QTextBlockUserData):
 
@@ -220,18 +333,26 @@ class HTMLUserData(QTextBlockUserData):
         self.attributes = []
         self.state = State()
         self.css_user_data = None
+<<<<<<< HEAD
         self.doc_name = None
 
     def clear(self, state=None, doc_name=None):
         self.tags, self.attributes = [], []
         self.state = State() if state is None else state
         self.doc_name = doc_name
+=======
+
+    def clear(self, state=None):
+        self.tags, self.attributes = [], []
+        self.state = State() if state is None else state
+>>>>>>> origin/sengian-custom
 
     @classmethod
     def tag_ok_for_spell(cls, name):
         return name not in html_spell_tags
 
 class XMLUserData(HTMLUserData):
+<<<<<<< HEAD
 
     @classmethod
     def tag_ok_for_spell(cls, name):
@@ -245,6 +366,21 @@ ATTR_NAME, ATTR_VALUE, ATTR_START, ATTR_END = object(), object(), object(), obje
 def add_attr_data(user_data, data_type, data, offset):
     user_data.attributes.append(Attr(offset, data_type, data))
 
+=======
+
+    @classmethod
+    def tag_ok_for_spell(cls, name):
+        return name in xml_spell_tags
+
+def add_tag_data(user_data, tag):
+    user_data.tags.append(tag)
+
+ATTR_NAME, ATTR_VALUE, ATTR_START, ATTR_END = object(), object(), object(), object()
+
+def add_attr_data(user_data, data_type, data, offset):
+    user_data.attributes.append(Attr(offset, data_type, data))
+
+>>>>>>> origin/sengian-custom
 def css(state, text, i, formats, user_data):
     ' Inside a <style> tag '
     pat = cdata_close_pats['style']
@@ -282,7 +418,11 @@ def process_text(state, text, nbsp_format, spell_format, user_data):
     ans = []
     fmt = None
     if state.is_bold or state.is_italic:
+<<<<<<< HEAD
         fmt = syntax_text_char_format()
+=======
+        fmt = SyntaxTextCharFormat()
+>>>>>>> origin/sengian-custom
         if state.is_bold:
             fmt.setFontWeight(QFont.Bold)
         if state.is_italic:
@@ -293,6 +433,7 @@ def process_text(state, text, nbsp_format, spell_format, user_data):
         last = m.end()
     if not ans:
         ans = [(len(text), fmt)]
+<<<<<<< HEAD
     elif last < len(text):
         ans.append((len(text) - last, fmt))
 
@@ -300,6 +441,13 @@ def process_text(state, text, nbsp_format, spell_format, user_data):
         split_ans = []
         locale = state.current_lang or dictionaries.default_locale
         sfmt = QTextCharFormat(spell_format)
+=======
+
+    if tprefs['inline_spell_check'] and state.tags and user_data.tag_ok_for_spell(state.tags[-1].name):
+        split_ans = []
+        locale = state.current_lang or dictionaries.default_locale
+        sfmt = SyntaxTextCharFormat(spell_format)
+>>>>>>> origin/sengian-custom
         if fmt is not None:
             sfmt.merge(fmt)
 
@@ -308,7 +456,23 @@ def process_text(state, text, nbsp_format, spell_format, user_data):
             if fmt is nbsp_format:
                 split_ans.append((tlen, fmt))
             else:
+<<<<<<< HEAD
                 split_ans.extend(check_spelling(text[tpos:tpos+tlen], tlen, fmt, locale, sfmt, store_locale.enabled))
+=======
+                ctext = text[tpos:tpos+tlen]
+                ppos = 0
+                for start, length in split_into_words_and_positions(ctext, lang=locale.langcode):
+                    if start > ppos:
+                        split_ans.append((start - ppos, fmt))
+                    ppos = start + length
+                    recognized = dictionaries.recognized(ctext[start:ppos], locale)
+                    if not recognized:
+                        wsfmt = SyntaxTextCharFormat(sfmt)
+                        wsfmt.setProperty(SPELL_PROPERTY, (ctext[start:ppos], locale))
+                    split_ans.append((length, fmt if recognized else wsfmt))
+                if ppos == 0:
+                    split_ans.append((tlen, fmt))
+>>>>>>> origin/sengian-custom
 
             tpos += tlen
         ans = split_ans
@@ -351,10 +515,14 @@ def normal(state, text, i, formats, user_data):
         ans.append((len(name), formats['tag_name']))
         state.parse = IN_CLOSING_TAG if closing else IN_OPENING_TAG
         add_tag_data(user_data, TagStart(i, prefix, name, closing, True))
+<<<<<<< HEAD
         if closing:
             close_tag(state, name)
         else:
             state.tag_being_defined = Tag(name)
+=======
+        (state.close_tag if closing else state.open_tag)(name)
+>>>>>>> origin/sengian-custom
         return ans
 
     if ch == '&':
@@ -383,7 +551,11 @@ def opening_tag(cdata_tags, state, text, i, formats, user_data):
         add_tag_data(user_data, TagEnd(i + l - 1, True, False))
         return [(l, formats['tag'])]
     if ch == '>':
+<<<<<<< HEAD
         finish_opening_tag(state, cdata_tags)
+=======
+        state.finish_opening_tag(cdata_tags)
+>>>>>>> origin/sengian-custom
         add_tag_data(user_data, TagEnd(i, False, False))
         return [(1, formats['tag'])]
     m = attribute_name_pat.match(text, i)
@@ -444,12 +616,15 @@ def quoted_val(state, text, i, formats, user_data):
             except ValueError:
                 pass
         add_attr_data(user_data, ATTR_VALUE, ATTR_END, i + num)
+<<<<<<< HEAD
         is_link = state.attribute_name in LINK_ATTRS
 
     if is_link:
         if verify_link(text[i:i+num - 1], user_data.doc_name) is False:
             return [(num - 1, formats['bad_link']), (1, formats['string'])]
         return [(num - 1, formats['link']), (1, formats['string'])]
+=======
+>>>>>>> origin/sengian-custom
     return [(num, formats['string'])]
 
 def closing_tag(state, text, i, formats, user_data):
@@ -531,6 +706,7 @@ def create_formats(highlighter, add_css=True):
     f.setFontWeight(QFont.Bold)
     if add_css:
         formats['css_sub_formats'] = create_css_formats(highlighter)
+<<<<<<< HEAD
     formats['spell'].setProperty(SPELL_PROPERTY, True)
     formats['link'] = syntax_text_char_format(t['Link'])
     formats['link'].setProperty(LINK_PROPERTY, True)
@@ -540,6 +716,8 @@ def create_formats(highlighter, add_css=True):
     formats['bad_link'].setToolTip(_('This link points to a file that is not present in the book'))
     formats['tag_name'] = f = syntax_text_char_format(t['Statement'])
     f.setProperty(TAG_NAME_PROPERTY, True)
+=======
+>>>>>>> origin/sengian-custom
     return formats
 
 
@@ -564,6 +742,7 @@ class XMLHighlighter(Highlighter):
 
     def tag_ok_for_spell(self, name):
         return XMLUserData.tag_ok_for_spell(name)
+<<<<<<< HEAD
 
 def profile():
     import sys
@@ -589,6 +768,8 @@ def profile():
     del h
     del doc
     del app
+=======
+>>>>>>> origin/sengian-custom
 
 if __name__ == '__main__':
     from calibre.gui2.tweak_book.editor.widget import launch_editor

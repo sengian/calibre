@@ -13,11 +13,17 @@ from future_builtins import map
 import regex
 from PyQt5.Qt import (
     QPlainTextEdit, QFontDatabase, QToolTip, QPalette, QFont, QKeySequence,
+<<<<<<< HEAD
     QTextEdit, QTextFormat, QWidget, QSize, QPainter, Qt, QRect, QColor,
     QColorDialog, QTimer, pyqtSignal)
+=======
+    QTextEdit, QTextFormat, QWidget, QSize, QPainter, Qt, QRect, pyqtSlot,
+    QApplication, QMimeData, QColor, QColorDialog, QTimer)
+>>>>>>> origin/sengian-custom
 
 from calibre import prepare_string_for_xml
 from calibre.gui2.tweak_book import tprefs, TOP
+<<<<<<< HEAD
 from calibre.gui2.tweak_book.completion.popup import CompletionPopup
 from calibre.gui2.tweak_book.editor import (
     SYNTAX_PROPERTY, SPELL_PROPERTY, SPELL_LOCALE_PROPERTY, store_locale, LINK_PROPERTY)
@@ -29,6 +35,17 @@ from calibre.gui2.tweak_book.widgets import PlainTextEdit, PARAGRAPH_SEPARATOR
 from calibre.spell.break_iterator import index_of
 from calibre.utils.icu import safe_chr, string_length, capitalize, upper, lower, swapcase
 from calibre.utils.titlecase import titlecase
+=======
+from calibre.gui2.tweak_book.editor import SYNTAX_PROPERTY, SPELL_PROPERTY
+from calibre.gui2.tweak_book.editor.themes import THEMES, default_theme, theme_color, theme_format
+from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter
+from calibre.gui2.tweak_book.editor.syntax.html import HTMLHighlighter, XMLHighlighter
+from calibre.gui2.tweak_book.editor.syntax.css import CSSHighlighter
+from calibre.gui2.tweak_book.editor.smart import NullSmarts
+from calibre.gui2.tweak_book.editor.smart.html import HTMLSmarts
+from calibre.spell.break_iterator import index_of
+from calibre.utils.icu import safe_chr, string_length
+>>>>>>> origin/sengian-custom
 
 
 def get_highlighter(syntax):
@@ -125,8 +142,12 @@ class TextEdit(PlainTextEdit):
         self.apply_theme(theme)
         w = self.fontMetrics()
         self.space_width = w.width(' ')
+<<<<<<< HEAD
         self.tw = self.smarts.override_tab_stop_width if self.smarts.override_tab_stop_width is not None else prefs['editor_tab_stop_width']
         self.setTabStopWidth(self.tw * self.space_width)
+=======
+        self.setTabStopWidth(prefs['editor_tab_stop_width'] * self.space_width)
+>>>>>>> origin/sengian-custom
         if dictionaries_changed:
             self.highlighter.rehighlight()
 
@@ -169,8 +190,13 @@ class TextEdit(PlainTextEdit):
         self.syntax = syntax
         self.highlighter = get_highlighter(syntax)()
         self.highlighter.apply_theme(self.theme)
+<<<<<<< HEAD
         self.highlighter.set_document(self.document(), doc_name=doc_name)
         sclass = get_smarts(syntax)
+=======
+        self.highlighter.set_document(self.document())
+        sclass = {'html':HTMLSmarts, 'xml':HTMLSmarts}.get(syntax, None)
+>>>>>>> origin/sengian-custom
         if sclass is not None:
             self.smarts = sclass(self)
             if self.smarts.override_tab_stop_width is not None:
@@ -197,8 +223,13 @@ class TextEdit(PlainTextEdit):
         self.setTextCursor(c)
         self.ensureCursorVisible()
 
+<<<<<<< HEAD
     def simple_replace(self, text, cursor=None):
         c = cursor or self.textCursor()
+=======
+    def simple_replace(self, text):
+        c = self.textCursor()
+>>>>>>> origin/sengian-custom
         c.insertText(unicodedata.normalize('NFC', text))
         self.setTextCursor(c)
 
@@ -231,9 +262,14 @@ class TextEdit(PlainTextEdit):
             sel.append(self.current_cursor_line)
         if self.current_search_mark is not None:
             sel.append(self.current_search_mark)
+<<<<<<< HEAD
         if instant and not self.highlighter.has_requests and self.smarts is not None:
             sel.extend(self.smarts.get_extra_selections(self))
             self.smart_highlighting_updated.emit()
+=======
+        if instant:
+            sel.extend(self.smarts.get_extra_selections(self))
+>>>>>>> origin/sengian-custom
         else:
             self.smarts_highlight_timer.start()
         self.setExtraSelections(sel)
@@ -403,7 +439,11 @@ class TextEdit(PlainTextEdit):
         block = c.block()
         while block.isValid():
             for r in block.layout().additionalFormats():
+<<<<<<< HEAD
                 if r.format.property(SPELL_PROPERTY):
+=======
+                if r.format.property(SPELL_PROPERTY).toPyObject() is not None:
+>>>>>>> origin/sengian-custom
                     if not from_cursor or block.position() + r.start + r.length > c.position():
                         c.setPosition(block.position() + r.start)
                         c.setPosition(c.position() + r.length, c.KeepAnchor)
@@ -548,6 +588,7 @@ class TextEdit(PlainTextEdit):
                 return True
         return QPlainTextEdit.event(self, ev)
 
+<<<<<<< HEAD
     def text_for_range(self, block, r):
         c = self.textCursor()
         c.setPosition(block.position() + r.start)
@@ -562,13 +603,20 @@ class TextEdit(PlainTextEdit):
             if r.start <= pos < r.start + r.length and r.format.property(SPELL_PROPERTY):
                 return r.format.property(SPELL_LOCALE_PROPERTY)
 
+=======
+>>>>>>> origin/sengian-custom
     def recheck_word(self, word, locale):
         c = self.textCursor()
         c.movePosition(c.Start)
         block = c.block()
         while block.isValid():
             for r in block.layout().additionalFormats():
+<<<<<<< HEAD
                 if r.format.property(SPELL_PROPERTY) and self.text_for_range(block, r) == word:
+=======
+                x = r.format.property(SPELL_PROPERTY).toPyObject()
+                if x is not None and word == x[0]:
+>>>>>>> origin/sengian-custom
                     self.highlighter.reformat_block(block)
                     break
             block = block.next()
@@ -716,12 +764,15 @@ class TextEdit(PlainTextEdit):
             self.setOverwriteMode(self.overwriteMode() ^ True)
             ev.accept()
             return
+<<<<<<< HEAD
         if self.snippet_manager.handle_key_press(ev):
             self.completion_popup.hide()
             return
         if self.smarts.handle_key_press(ev, self):
             self.handle_keypress_completion(ev)
             return
+=======
+>>>>>>> origin/sengian-custom
         QPlainTextEdit.keyPressEvent(self, ev)
         self.handle_keypress_completion(ev)
 

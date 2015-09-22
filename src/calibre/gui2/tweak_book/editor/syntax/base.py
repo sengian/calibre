@@ -7,6 +7,7 @@ __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
 import sys
+<<<<<<< HEAD
 from collections import defaultdict, deque
 
 from PyQt5.Qt import (
@@ -18,6 +19,19 @@ from calibre.utils.icu import utf16_length
 
 is_wide_build = sys.maxunicode >= 0x10ffff
 
+=======
+from collections import defaultdict
+
+from PyQt4.Qt import (
+    QTextCursor, pyqtSlot, QTextBlockUserData, QTextLayout)
+
+from ..themes import highlight_to_char_format
+from calibre.gui2.tweak_book.widgets import BusyCursor
+from calibre.utils.icu import utf16_length
+
+is_wide_build = sys.maxunicode >= 0x10ffff
+
+>>>>>>> origin/sengian-custom
 def run_loop(user_data, state_map, formats, text):
     state = user_data.state
     i = 0
@@ -40,6 +54,7 @@ def run_loop(user_data, state_map, formats, text):
             # Something went wrong in the syntax highlighter
             print ('Syntax highlighter returned a zero length format, parse state:', state.parse)
             break
+<<<<<<< HEAD
 
 class SimpleState(object):
 
@@ -80,6 +95,39 @@ class SyntaxHighlighter(object):
     @property
     def has_requests(self):
         return bool(self.requests)
+=======
+
+class SimpleState(object):
+
+    __slots__ = ('parse',)
+
+    def __init__(self):
+        self.parse = 0
+
+    def copy(self):
+        s = SimpleState()
+        s.parse = self.parse
+        return s
+
+class SimpleUserData(QTextBlockUserData):
+
+    def __init__(self):
+        QTextBlockUserData.__init__(self)
+        self.state = SimpleState()
+
+    def clear(self, state=None):
+        self.state = SimpleState() if state is None else state
+
+class SyntaxHighlighter(object):
+
+    create_formats_func = lambda highlighter: {}
+    spell_attributes = ()
+    tag_ok_for_spell = lambda x: False
+    user_data_factory = SimpleUserData
+
+    def __init__(self):
+        self.doc = None
+>>>>>>> origin/sengian-custom
 
     def apply_theme(self, theme):
         self.theme = {k:highlight_to_char_format(v) for k, v in theme.iteritems()}
@@ -89,7 +137,11 @@ class SyntaxHighlighter(object):
     def create_formats(self):
         self.formats = self.create_formats_func()
 
+<<<<<<< HEAD
     def set_document(self, doc, doc_name=None):
+=======
+    def set_document(self, doc):
+>>>>>>> origin/sengian-custom
         old_doc = self.doc
         if old_doc is not None:
             old_doc.contentsChange.disconnect(self.reformat_blocks)
@@ -100,10 +152,16 @@ class SyntaxHighlighter(object):
                 blk.layout().clearAdditionalFormats()
                 blk = blk.next()
             c.endEditBlock()
+<<<<<<< HEAD
         self.doc = self.doc_name = None
         if doc is not None:
             self.doc = doc
             self.doc_name = doc_name
+=======
+        self.doc = None
+        if doc is not None:
+            self.doc = doc
+>>>>>>> origin/sengian-custom
             doc.contentsChange.connect(self.reformat_blocks)
             self.rehighlight()
 
@@ -127,6 +185,7 @@ class SyntaxHighlighter(object):
     @pyqtSlot(int, int, int)
     def reformat_blocks(self, position, removed, added):
         doc = self.doc
+<<<<<<< HEAD
         if doc is None or self.ignore_requests or not hasattr(self, 'state_map'):
             return
 
@@ -220,11 +279,47 @@ class SyntaxHighlighter(object):
                 formats.append(r)
         force_next_highlight = is_new_ud or ud.state != orig_state
         return formats, force_next_highlight
+=======
+        if doc is None or not hasattr(self, 'state_map'):
+            return
+        last_block = doc.findBlock(position + added + (1 if removed > 0 else 0))
+        if not last_block.isValid():
+            last_block = doc.lastBlock()
+        end_pos = last_block.position() + last_block.length()
+        force_next_highlight = False
+
+        doc.contentsChange.disconnect(self.reformat_blocks)
+        try:
+            block = doc.findBlock(position)
+            while block.isValid() and (block.position() < end_pos or force_next_highlight):
+                ud, new_ud = self.get_user_data(block)
+                orig_state = ud.state
+                pblock = block.previous()
+                if pblock.isValid():
+                    start_state = pblock.userData()
+                    if start_state is None:
+                        start_state = self.user_data_factory().state
+                    else:
+                        start_state = start_state.state.copy()
+                else:
+                    start_state = self.user_data_factory().state
+                ud.clear(state=start_state)  # Ensure no stale user data lingers
+                formats = []
+                for i, num, fmt in run_loop(ud, self.state_map, self.formats, unicode(block.text())):
+                    if fmt is not None:
+                        formats.append((i, num, fmt))
+                self.apply_format_changes(doc, block, formats)
+                force_next_highlight = new_ud or ud.state != orig_state
+                block = block.next()
+        finally:
+            doc.contentsChange.connect(self.reformat_blocks)
+>>>>>>> origin/sengian-custom
 
     def reformat_block(self, block):
         if block.isValid():
             self.reformat_blocks(block.position(), 0, 1)
 
+<<<<<<< HEAD
     def apply_format_changes(self, block, formats):
         layout = block.layout()
         preedit_start = layout.preeditAreaPosition()
@@ -237,4 +332,24 @@ class SyntaxHighlighter(object):
                 elif r.start + r.length >= preedit_start:
                     r.length += preedit_length
         layout.setAdditionalFormats(formats)
+=======
+    def apply_format_changes(self, doc, block, formats):
+        layout = block.layout()
+        preedit_start = layout.preeditAreaPosition()
+        preedit_length = layout.preeditAreaText().length()
+        ranges = []
+        R = QTextLayout.FormatRange
+        for i, num, fmt in formats:
+            # Adjust range by pre-edit text, if any
+            if preedit_start != 0:
+                if i >= preedit_start:
+                    i += preedit_length
+                elif i + num >= preedit_start:
+                    num += preedit_length
+            r = R()
+            r.start, r.length, r.format = i, num, fmt
+            ranges.append(r)
+        layout.setAdditionalFormats(ranges)
+        doc.markContentsDirty(block.position(), block.length())
+>>>>>>> origin/sengian-custom
 

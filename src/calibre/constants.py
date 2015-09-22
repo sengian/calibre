@@ -4,7 +4,11 @@ __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 __appname__   = u'calibre'
+<<<<<<< HEAD
 numeric_version = (2, 38, 0)
+=======
+numeric_version = (1, 37, 0)
+>>>>>>> origin/sengian-custom
 __version__   = u'.'.join(map(unicode, numeric_version))
 __author__    = u"Kovid Goyal <kovid@kovidgoyal.net>"
 

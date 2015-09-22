@@ -136,9 +136,12 @@ class TestICU(unittest.TestCase):
             self.ae(icu._icu.string_length(x), l)
         for x, l in [('', 0), ('a', 1), ('\U0001f431', 2)]:
             self.ae(icu._icu.utf16_length(x), l)
+<<<<<<< HEAD
         self.ae(icu._icu.chr(0x1f431), '\U0001f431')
         self.ae(icu._icu.ord_string('abc'*100), tuple(map(ord, 'abc'*100)))
         self.ae(icu._icu.ord_string('\U0001f431'), (0x1f431,))
+=======
+>>>>>>> origin/sengian-custom
 
     def test_character_name(self):
         ' Test character naming '
@@ -155,6 +158,7 @@ class TestICU(unittest.TestCase):
     def test_break_iterator(self):
         ' Test the break iterator '
         from calibre.spell.break_iterator import split_into_words as split, index_of, split_into_words_and_positions
+<<<<<<< HEAD
         for q in ('one two three', ' one two three', 'one\ntwo  three ', ):
             self.ae(split(unicode(q)), ['one', 'two', 'three'], 'Failed to split: %r' % q)
         self.ae(split(u'I I\'m'), ['I', "I'm"])
@@ -196,6 +200,18 @@ class TestICU(unittest.TestCase):
         ):
             fpos = index_of(needle, haystack)
             self.ae(pos, fpos, 'Failed to find index of %r in %r (%d != %d)' % (needle, haystack, pos, fpos))
+=======
+        for q in ('one two three', ' one two three', 'one\ntwo  three ', 'one-two,three'):
+            self.ae(split(unicode(q)), ['one', 'two', 'three'], 'Failed to split: %r' % q)
+        self.ae(split(u'I I\'m'), ['I', "I'm"])
+        self.ae(split_into_words_and_positions('one \U0001f431 three'), [(0, 3), (6 if sys.maxunicode >= 0x10ffff else 7, 5)])
+        self.ae(0, index_of('i', 'i'))
+        self.ae(4, index_of('i', 'six i'))
+        self.ae(-1, index_of('i', ''))
+        self.ae(-1, index_of('', ''))
+        self.ae(-1, index_of('', 'i'))
+        self.ae(-1, index_of('i', 'six clicks'))
+>>>>>>> origin/sengian-custom
 
 class TestRunner(unittest.main):
 

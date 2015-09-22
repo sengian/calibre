@@ -16,7 +16,7 @@ class AdvancedUserRecipe1306061239(BasicNewsRecipe):
     compress_news_images = True
     compress_news_images_max_size = 15
     oldest_article = 1.5
-    max_articles_per_feed = 10
+    max_articles_per_feed = 12
     remove_empty_feeds = True
     remove_javascript     = True
     no_stylesheets = True

@@ -193,7 +193,11 @@ class OptionSet(object):
             try:
                 if not isinstance(src, unicode):
                     src = src.decode('utf-8')
+<<<<<<< HEAD
                 src = src.replace(u'PyQt%d.QtCore' % 4, u'PyQt5.QtCore')
+=======
+                src = src.replace(u'PyQt5.QtCore', u'PyQt4.QtCore')
+>>>>>>> origin/sengian-custom
                 exec src in options
             except:
                 print 'Failed to parse options string:'

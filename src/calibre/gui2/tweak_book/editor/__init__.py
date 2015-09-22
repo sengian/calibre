@@ -6,7 +6,11 @@ from __future__ import (unicode_literals, division, absolute_import,
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
+<<<<<<< HEAD
 from PyQt5.Qt import QTextCharFormat
+=======
+from PyQt4.Qt import QTextCharFormat, QFont
+>>>>>>> origin/sengian-custom
 
 from calibre.ebooks.oeb.base import OEB_DOCS, OEB_STYLES
 from calibre.ebooks.oeb.polish.container import guess_type
@@ -42,6 +46,7 @@ def editor_from_syntax(syntax, parent=None):
 
 SYNTAX_PROPERTY = QTextCharFormat.UserProperty
 SPELL_PROPERTY = SYNTAX_PROPERTY + 1
+<<<<<<< HEAD
 SPELL_LOCALE_PROPERTY = SPELL_PROPERTY + 1
 LINK_PROPERTY = SPELL_LOCALE_PROPERTY + 1
 TAG_NAME_PROPERTY = LINK_PROPERTY + 1
@@ -55,6 +60,8 @@ def syntax_text_char_format(*args):
 class StoreLocale(object):
 
     __slots__ = ('enabled',)
+=======
+>>>>>>> origin/sengian-custom
 
     def __init__(self):
         self.enabled = False
@@ -62,6 +69,15 @@ class StoreLocale(object):
     def __enter__(self):
         self.enabled = True
 
+<<<<<<< HEAD
     def __exit__(self, *args):
         self.enabled = False
 store_locale = StoreLocale()
+=======
+    def __repr__(self):
+        return 'SyntaxFormat(id=%s, color=%s, italic=%s, bold=%s)' % (
+            id(self), self.foreground().color().name(), self.fontItalic(), self.fontWeight() >= QFont.DemiBold)
+    __str__ = __repr__
+
+
+>>>>>>> origin/sengian-custom

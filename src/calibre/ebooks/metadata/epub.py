@@ -280,6 +280,20 @@ def update_metadata(opf, mi, apply_null=False, update_timestamp=False, force_ide
     opf.smart_update(mi, apply_null=apply_null)
     if getattr(mi, 'uuid', None):
         opf.application_id = mi.uuid
+<<<<<<< HEAD
+=======
+    if apply_null:
+        if not getattr(mi, 'series', None):
+            opf.series = None
+        if not getattr(mi, 'tags', []):
+            opf.tags = []
+        if not getattr(mi, 'isbn', None):
+            opf.isbn = None
+        if not getattr(mi, 'comments', None):
+            opf.comments = None
+        if not getattr(mi, 'publisher', None):
+            opf.publisher = None
+>>>>>>> origin/sengian-custom
     if apply_null or force_identifiers:
         opf.set_identifiers(mi.get_identifiers())
     else:

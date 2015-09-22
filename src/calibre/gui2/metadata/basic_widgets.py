@@ -28,9 +28,14 @@ from calibre.gui2 import (file_icon_provider, UNDEFINED_QDATETIME,
         choose_files, error_dialog, choose_images)
 from calibre.gui2.complete2 import EditWithComplete
 from calibre.utils.date import (
+<<<<<<< HEAD
     local_tz, qt_to_dt, as_local_time, UNDEFINED_DATE, is_date_undefined,
     utcfromtimestamp, parse_only_date)
 from calibre import strftime
+=======
+    local_tz, qt_to_dt, as_local_time, UNDEFINED_DATE, is_date_undefined)
+from calibre import strftime, force_unicode
+>>>>>>> origin/sengian-custom
 from calibre.ebooks import BOOK_EXTENSIONS
 from calibre.customize.ui import run_plugins_on_import
 from calibre.gui2.comments_editor import Editor
@@ -395,8 +400,26 @@ class AuthorsEdit(EditWithComplete, ToMetadataMixin):
         if authors != self.original_val:
             # Only try to commit if changed. This allow setting of other fields
             # to work even if some of the book files are opened in windows.
+<<<<<<< HEAD
             self.books_to_refresh |= db.set_authors(id_, authors, notify=False,
                 allow_case_change=True)
+=======
+            try:
+                self.books_to_refresh |= db.set_authors(id_, authors, notify=False,
+                    allow_case_change=True)
+            except (IOError, OSError) as err:
+                if getattr(err, 'errno', None) == errno.EACCES:  # Permission denied
+                    import traceback
+                    fname = getattr(err, 'filename', None)
+                    p = 'Locked file: %s\n\n'%fname if fname else ''
+                    error_dialog(self, _('Permission denied'),
+                            _('Could not change the on disk location of this'
+                                ' book. Is it open in another program?'),
+                            det_msg=p+force_unicode(traceback.format_exc()), show=True)
+                    return False
+                raise
+        return True
+>>>>>>> origin/sengian-custom
 
     @dynamic_property
     def current_val(self):
@@ -1482,8 +1505,14 @@ class IdentifiersEdit(QLineEdit, ToMetadataMixin):
                         val[k] = v
             ids = sorted(val.iteritems(), key=keygen)
             txt = ', '.join(['%s:%s'%(k.lower(), vl) for k, vl in ids])
+<<<<<<< HEAD
             # Use selectAll + insert instead of setText so that undo works
             self.selectAll(), self.insert(txt.strip())
+=======
+            # Use clear + insert instead of setText so that undo works
+            self.clear()
+            self.insert(txt.strip())
+>>>>>>> origin/sengian-custom
             self.setCursorPosition(0)
         return property(fget=fget, fset=fset)
 

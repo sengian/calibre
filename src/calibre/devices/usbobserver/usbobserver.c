@@ -361,6 +361,7 @@ usbobserver_date_fmt(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;
 }
 
+<<<<<<< HEAD
 static int
 usbobserver_has_mtp_interface(io_service_t usb_device) {
     io_iterator_t iter = 0;
@@ -455,6 +456,8 @@ end:
     Py_XINCREF(ans);
     return ans;
 }
+=======
+>>>>>>> origin/sengian-custom
 
 static PyMethodDef usbobserver_methods[] = {
     {"get_usb_devices", usbobserver_get_usb_devices, METH_VARARGS, 
@@ -475,9 +478,14 @@ static PyMethodDef usbobserver_methods[] = {
     {"date_format", usbobserver_date_fmt, METH_VARARGS, 
      "date_format() -> The (short) date format used by the user's current locale"
     },
+<<<<<<< HEAD
     {"is_mtp_device", usbobserver_is_mtp, METH_VARARGS, 
      "is_mtp_device(vendor_id, product_id, bcd, serial) -> Return True if the specified device has an MTP interface"
     },
+=======
+
+
+>>>>>>> origin/sengian-custom
 
     {NULL, NULL, 0, NULL}
 };

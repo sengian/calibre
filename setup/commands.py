@@ -8,7 +8,11 @@ __docformat__ = 'restructuredtext en'
 
 __all__ = [
         'pot', 'translations', 'get_translations', 'iso639', 'iso3166',
+<<<<<<< HEAD
         'build', 'mathjax',
+=======
+        'build', 'server', 'mathjax',
+>>>>>>> origin/sengian-custom
         'gui',
         'develop', 'install',
         'kakasi', 'coffee', 'resources',

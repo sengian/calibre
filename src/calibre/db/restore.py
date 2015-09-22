@@ -271,8 +271,17 @@ class Restore(Thread):
             os.remove(save_path)
         try:
             os.rename(dbpath, save_path)
+<<<<<<< HEAD
         except EnvironmentError:
             time.sleep(30)  # Wait a little for dropbox or the antivirus or whatever to release the file
             shutil.copyfile(dbpath, save_path)
             os.remove(dbpath)
+=======
+        except OSError as err:
+            if getattr(err, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
+                time.sleep(30)  # Wait a little for dropbox or the antivirus or whatever to release the file
+                os.rename(dbpath, save_path)
+            else:
+                raise
+>>>>>>> origin/sengian-custom
         shutil.copyfile(ndbpath, dbpath)

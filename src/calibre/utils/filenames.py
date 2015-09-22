@@ -495,6 +495,7 @@ def remove_dir_if_empty(path, ignore_metadata_caches=False):
             return
         raise
 
+<<<<<<< HEAD
 if iswindows:
     # Python's expanduser is broken for non-ASCII usernames
     def expanduser(path):
@@ -527,3 +528,6 @@ def format_permissions(st_mode):
     if st_mode & stat.S_ISVTX:
         ans[9] = 't' if (st_mode & stat.S_IXUSR) else 'T'
     return ''.join(ans)
+=======
+
+>>>>>>> origin/sengian-custom

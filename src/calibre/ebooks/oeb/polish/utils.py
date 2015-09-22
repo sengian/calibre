@@ -150,6 +150,7 @@ def lead_text(top_elem, num_words=10):
             stack.extend(reversed(list((c, 'text') for c in elem.iterchildren('*'))))
     return ' '.join(words[:num_words])
 
+<<<<<<< HEAD
 def parse_css(data, fname='<string>', is_declaration=False, decode=None, log_level=None, css_preprocessor=None):
     if log_level is None:
         import logging
@@ -205,3 +206,5 @@ def apply_func_to_html_text(match, func=icu_upper, handle_entities=handle_entiti
     parts = (x if x.startswith('<') else f(x) for x in parts)
     return ''.join(parts)
 
+=======
+>>>>>>> origin/sengian-custom

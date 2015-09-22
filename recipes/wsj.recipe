@@ -88,6 +88,7 @@ class WSJ(JavascriptRecipe):
 
         articles = []
 
+<<<<<<< HEAD
         for a in CSSSelect('a.mjLinkItem[href]')(root):
             container = a.xpath('ancestor::li')
             meta = CSSSelect('.meta_sectionName')(a)
@@ -112,6 +113,42 @@ class WSJ(JavascriptRecipe):
             self.log('\tFound article:', title)
             self.log('\t\t', desc)
         return articles
+=======
+        feeds = []
+        div = soup.find('div', attrs={'class':'itpHeader'})
+        div = div.find('ul', attrs={'class':'tab'})
+        for a in div.findAll('a', href=lambda x: x and '/itp/' in x):
+            pageone = a['href'].endswith('pageone')
+            if pageone:
+                title = 'Front Section'
+                url = self.abs_wsj_url(a['href'])
+                feeds = self.wsj_add_feed(feeds,title,url)
+                title = "What's News"
+                url = url.replace('pageone','whatsnews')
+                feeds = self.wsj_add_feed(feeds,title,url)
+            else:
+                title = self.tag_to_string(a)
+                url = self.abs_wsj_url(a['href'])
+                feeds = self.wsj_add_feed(feeds,title,url)
+
+        for li in soup.findAll('li', attrs={'class':'ahed_listitem'}):
+            h2 = li.find('h2')
+            if h2 is None:
+                continue
+            a = h2.find('a', href=True)
+            if a is None:
+                continue
+            url = a['href']
+            title = self.tag_to_string(a)
+            p = h2.findNextSibling('p')
+            if p is not None:
+                desc = self.tag_to_string(p)
+            else:
+                desc = ''
+            if feeds:
+                feeds[0][1].append({'title':title, 'url':url, 'description':desc, 'date':''})
+        return feeds
+>>>>>>> origin/sengian-custom
 
     def wsj_find_wn_articles(self, url):
         root = self.index_to_soup(url)
@@ -145,11 +182,32 @@ class WSJ(JavascriptRecipe):
             if url.endswith('whatsnews'):
                 articles = self.wsj_find_wn_articles(url)
             else:
+<<<<<<< HEAD
                 articles = self.wsj_find_articles(url)
         except:
             articles = []
         if articles:
             feeds.append((title, articles))
+=======
+                title = self.tag_to_string(a).strip()
+            url = self.abs_wsj_url(a['href'])
+            desc = ''
+            for p in container.findAll('p'):
+                desc = self.tag_to_string(p)
+                if 'Subscriber Content' not in desc:
+                    break
+
+            articles.append({'title':title, 'url':url,
+                'description':desc, 'date':''})
+
+            self.log('\tFound article:', title)
+            self.log('\t\t', desc)
+
+        return articles
+
+    def cleanup(self):
+        self.browser.open('http://online.wsj.com/logout?url=http://online.wsj.com')
+>>>>>>> origin/sengian-custom
 
     def get_wsj_index(self, browser):
         # return self.test_wsj_index()

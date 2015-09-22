@@ -504,7 +504,11 @@ class Worker(Thread):  # Get details {{{
 
     def parse_comments(self, root):
         ans = ''
+<<<<<<< HEAD
         ns = tuple(self.selector('#bookDescription_feature_div noscript'))
+=======
+        ns = CSSSelect('#bookDescription_feature_div noscript')(root)
+>>>>>>> origin/sengian-custom
         if ns:
             ns = ns[0]
             if len(ns) == 0 and ns.text:
@@ -1146,11 +1150,16 @@ if __name__ == '__main__':  # tests {{{
             ),
 
 
+
             (  # noscript description
                 {'identifiers':{'amazon':'0756407117'}},
                 [title_test(
                 "Throne of the Crescent Moon"),
+<<<<<<< HEAD
                 comments_test('Makhslood'), comments_test('Dhamsawaat'),
+=======
+                comments_test('Makhslood'), comments_test('Publishers Weekly'),
+>>>>>>> origin/sengian-custom
                 ]
             ),
 

@@ -851,7 +851,12 @@ class EbookViewer(MainWindow):
         self.iterator = EbookIterator(pathtoebook, copy_bookmarks_to_file=self.view.document.copy_bookmarks_to_file)
         self.history.clear()
         self.open_progress_indicator(_('Loading ebook...'))
+<<<<<<< HEAD
         worker = Worker(target=partial(self.iterator.__enter__, view_kepub=True))
+=======
+        worker = Worker(target=partial(self.iterator.__enter__,
+            extract_embedded_fonts_for_qt=True, view_kepub=True))
+>>>>>>> origin/sengian-custom
         worker.start()
         while worker.isAlive():
             worker.join(0.1)

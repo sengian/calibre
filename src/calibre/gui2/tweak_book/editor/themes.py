@@ -160,8 +160,11 @@ THEMES = {
     SpecialCharacter bg={cursor_loc}
     Error        us=wave uc=red
     SpellError   us=wave uc=magenta
+<<<<<<< HEAD
     Link         fg=blue
     BadLink      fg={string} us=wave uc=red
+=======
+>>>>>>> origin/sengian-custom
 
     DiffDelete   bg=rgb(255,180,200) fg=rgb(200,80,110)
     DiffInsert   bg=rgb(180,255,180) fg=rgb(80,210,80)

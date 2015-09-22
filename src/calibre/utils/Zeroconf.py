@@ -898,8 +898,11 @@ class Engine(threading.Thread):
                     for sock in rr:
                         try:
                             self.readers[sock].handle_read()
+<<<<<<< HEAD
                         except MalformedPacketException:
                             pass
+=======
+>>>>>>> origin/sengian-custom
                         except:
                             if DEBUG:
                                 traceback.print_exc()

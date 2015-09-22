@@ -22,7 +22,11 @@ class QtHighlighter(QTextDocument):
         self.l = QPlainTextDocumentLayout(self)
         self.setDocumentLayout(self.l)
         self.highlighter = hlclass()
+<<<<<<< HEAD
         self.highlighter.apply_theme(get_theme(tprefs['editor_theme']))
+=======
+        self.highlighter.apply_theme(get_theme())
+>>>>>>> origin/sengian-custom
         self.highlighter.set_document(self)
         self.setPlainText(text)
 

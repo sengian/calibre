@@ -290,6 +290,7 @@ class StatsCollector(object):
             src = rule.get('src', None)
             if not src:
                 continue
+<<<<<<< HEAD
             try:
                 tokens = parser.parse_stylesheet('@font-face { src: %s }' % src).rules[0].declarations[0].value
             except Exception:
@@ -305,6 +306,16 @@ class StatsCollector(object):
                             break
             else:
                 self.log.warn('The @font-face rule refers to a font file that does not exist in the book: %s' % src)
+=======
+            if src.startswith('url(') and src.endswith(')') and src[4] not in {'"', "'"}:
+                # Quote the url otherwise cssutils fails to parse it if it has
+                # ' or " in it
+                src = "url('" + src[4:-1].replace("'", "\\'") + "')"
+            style = self.parser.parseStyle('background-image:%s'%src, validate=False)
+            src = style.getProperty('background-image').propertyValue[0].uri
+            name = self.href_to_name(src, '@font-face rule')
+            if name is None:
+>>>>>>> origin/sengian-custom
                 continue
             normalize_font_properties(rule)
             rule['width'] = widths[rule['font-stretch']]
