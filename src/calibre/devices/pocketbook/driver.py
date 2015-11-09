@@ -143,7 +143,7 @@ class POCKETBOOK701(USBMS):
             drives['carda'] = main
         return drives
 
-THUMBPATH = 'system/cover_chache' #TBC
+THUMBPATH = 'system/cover_cache' #TBC
 
 # class ImageWrapper(object):
     # def __init__(self, image_path):
@@ -156,9 +156,12 @@ class POCKETBOOK(USBMS):
     author         = 'Sengian'
     version = (1, 0, 0)
 
-    dbversion = 0
-    fwversion = 0
+    # PocketBook specific
+    db_version = 0
+    fw_version = 0
     supported_dbversion = 120
+    db_path = None
+    PB_VERSION_DB='PocketBook'
 
     supported_platforms = ['windows', 'osx', 'linux']
 
@@ -188,7 +191,16 @@ class POCKETBOOK(USBMS):
 
     # SUPPORTS_USE_AUTHOR_SORT = True
 
-    # EXTRA_CUSTOMIZATION_MESSAGE = [
+    EXTRA_CUSTOMIZATION_MESSAGE = [
+            _('The PocketBook supports several collections including ')+
+                    'Read, Closed, Im_Reading. ' +
+            _('Create tags for automatic management'),
+            _('Upload separate covers for books') +
+            ':::'+_('Normally, the PocketBook readers get the cover image from the'
+                ' ebook file itself. With this option, calibre will send a '
+                'separate cover image to the reader, useful if you '
+                'have modified the cover.') 
+    ]
         # _('Comma separated list of metadata fields '
         # 'to turn into collections on the device. Possibilities include: ')+
         # 'series, tags, authors',
@@ -203,29 +215,17 @@ class POCKETBOOK(USBMS):
           # 'every time you connect your device. Unset this option if '
           # 'you have so many books on the reader that performance is '
           # 'unacceptable.'),
-        # _('Preserve cover aspect ratio when building thumbnails') +
-        # ':::' +
-        # _('Set this option if you want the cover thumbnails to have '
-          # 'the same aspect ratio (width to height) as the cover. '
-          # 'Unset it if you want the thumbnail to be the maximum size, '
-          # 'ignoring aspect ratio.'),
-        # _('Use SONY Author Format (First Author Only)') +
-        # ':::' +
-        # _('Set this option if you want the author on the Sony to '
-          # 'appear the same way the T1 sets it. This means it will '
-          # 'only show the first author for books with multiple authors. '
-          # 'Leave this disabled if you use Metadata Plugboards.')
-    # ]
-    # EXTRA_CUSTOMIZATION_DEFAULT = [
-                # ', '.join(['series', 'tags']),
-                # True,
-                # False,
-                # True,
-                # False,
-    # ]
 
-    # OPT_COLLECTIONS    = 0
-    # OPT_UPLOAD_COVERS  = 1
+    EXTRA_CUSTOMIZATION_DEFAULT = [
+                ', '.join(['series', 'tags']),
+                # True,
+                False,
+                # True,
+                # False,
+    ]
+
+    OPT_COLLECTIONS    = 0
+    OPT_UPLOAD_COVERS  = 1
     # OPT_REFRESH_COVERS = 2
     # OPT_PRESERVE_ASPECT_RATIO = 3
     # OPT_USE_SONY_AUTHORS = 4
@@ -233,18 +233,258 @@ class POCKETBOOK(USBMS):
     # plugboards = None
     # plugboard_func = None
 
+
     def _device_database_path(self):
-        return self.normalize_path(self._main_prefix + 'system/explorer-2/explorer-2.db')
+        # DB path in global, only one path anyway
+        self.db_path self.normalize_path(self._main_prefix + 'system/explorer-2/explorer-2.db')
 
     def _device_firmware(self):
-        # Return a dict with all the infos from the reader (TBC)
-        fw_path = self.normalize_path(self._main_prefix + 'fwinfo.txt')
-        return ''
+        # Return a dict with all the infos from the reader (only for fw before 5) (TBC)
+        self.fw_version = 'Unknown'
+        try:
+            open(self.normalize_path(self._main_prefix + 'fwinfo.txt')),
+                    'rb') as f:
+                self.fw_version = f.readline().split(',')[2]
+        except:
+            debug_print('{0}: Firmware is newer than 4.x or unknown error occured'.format(PB_VERSION_DB))
 
-    def _device_db_version(self):
-        # Return an integer with the db version
-        return self.normalize_path(self._main_prefix + 'system/explorer-2/explorer-2.db')
-        debug_print('Pocketbook: ')
+    def _device_db_version(self, connection=None):
+        # Give self.db_version an integer with the db version
+        if connection is None:
+            with closing(sqlite.connect(self.db_path)
+                    ) as connection:
+
+                cursor = connection.cursor()
+
+                cursor.execute('select id from version')
+                self.db_version = cursor.fetchone()[0]
+        else:
+            cursor = connection.cursor()
+            cursor.execute('select id from version')
+            self.db_version = cursor.fetchone()[0]
+
+        debug_print("{0} - Database Version: {1!s}".format(PB_VERSION_DB, self.dbversion))
+
+    def books(self, oncard=None, end_session=True):
+        # Return a list of ebooks on the device
+        from calibre.ebooks.metadata.meta import path_to_ext
+
+        dummy_bl = BookList(None, None, None)
+
+        # Return a dummy db if synchronization of books is not done
+        if (
+                (oncard == 'carda' and not self._card_a_prefix) or
+                (oncard and oncard != 'carda')
+            ):
+            self.report_progress(1.0, _('Getting list of books on device...'))
+            return dummy_bl
+
+        prefix = self._card_a_prefix if oncard == 'carda' \
+                 else self._main_prefix
+
+        # Determine the firmware version
+        self._device_firmware()
+
+        debug_print('Version of driver: ', self.version)
+        debug_print('Version of firmware: ', self.fw_version)
+
+        # Implement a custom function on rebuild collections for the BookListCollection class
+        self.booklist_class.rebuild_collections = self.rebuild_collections
+
+        # Get the metadata cache
+        bl = self.booklist_class(oncard, prefix, self.settings)
+        need_sync = self.parse_metadata_cache(bl, prefix, self.METADATA_CACHE)
+
+        # Make a dict cache of paths so the lookup in the loop below is faster.
+        bl_cache = {}
+        for idx,b in enumerate(bl):
+            bl_cache[b.lpath] = idx
+
+        # TODO: Understand and correct the function once needed
+        def update_booklist(prefix, path, title, authors, mime, date, ContentType, ImageID, readstatus, MimeType, expired, favouritesindex, accessibility):
+            changed = False
+            try:
+                lpath = path.partition(self.normalize_path(prefix))[2]
+                if lpath.startswith(os.sep):
+                    lpath = lpath[len(os.sep):]
+                lpath = lpath.replace('\\', '/')
+                debug_print("LPATH: ", lpath, "  - Title:  " , title)
+
+                playlist_map = {}
+
+                if lpath not in playlist_map:
+                    playlist_map[lpath] = []
+
+                if readstatus == 1:
+                    playlist_map[lpath].append('Im_Reading')
+                elif readstatus == 2:
+                    playlist_map[lpath].append('Read')
+                elif readstatus == 3:
+                    playlist_map[lpath].append('Closed')
+
+                # Related to a bug in the Kobo firmware that leaves an expired row for deleted books
+                # this shows an expired Collection so the user can decide to delete the book
+                if expired == 3:
+                    playlist_map[lpath].append('Expired')
+                # A SHORTLIST is supported on the touch but the data field is there on most earlier models
+                if favouritesindex == 1:
+                    playlist_map[lpath].append('Shortlist')
+
+                # Label Previews
+                if accessibility == 6:
+                    playlist_map[lpath].append('Preview')
+                elif accessibility == 4:
+                    playlist_map[lpath].append('Recommendation')
+
+                path = self.normalize_path(path)
+                # print "Normalized FileName: " + path
+
+                idx = bl_cache.get(lpath, None)
+                if idx is not None:
+                    bl_cache[lpath] = None
+                    if ImageID is not None:
+                        imagename = self.normalize_path(self._main_prefix + '.kobo/images/' + ImageID + ' - NickelBookCover.parsed')
+                        if not os.path.exists(imagename):
+                            # Try the Touch version if the image does not exist
+                            imagename = self.normalize_path(self._main_prefix + '.kobo/images/' + ImageID + ' - N3_LIBRARY_FULL.parsed')
+
+                        # print "Image name Normalized: " + imagename
+                        if not os.path.exists(imagename):
+                            debug_print("Strange - The image name does not exist - title: ", title)
+                        if imagename is not None:
+                            bl[idx].thumbnail = ImageWrapper(imagename)
+                    if (ContentType != '6' and MimeType != 'Shortcover'):
+                        if os.path.exists(self.normalize_path(os.path.join(prefix, lpath))):
+                            if self.update_metadata_item(bl[idx]):
+                                # print 'update_metadata_item returned true'
+                                changed = True
+                        else:
+                            debug_print("    Strange:  The file: ", prefix, lpath, " does mot exist!")
+                    if lpath in playlist_map and \
+                        playlist_map[lpath] not in bl[idx].device_collections:
+                            bl[idx].device_collections = playlist_map.get(lpath,[])
+                else:
+                    if ContentType == '6' and MimeType == 'Shortcover':
+                        book =  Book(prefix, lpath, title, authors, mime, date, ContentType, ImageID, size=1048576)
+                    else:
+                        try:
+                            if os.path.exists(self.normalize_path(os.path.join(prefix, lpath))):
+                                book = self.book_from_path(prefix, lpath, title, authors, mime, date, ContentType, ImageID)
+                            else:
+                                debug_print("    Strange:  The file: ", prefix, lpath, " does mot exist!")
+                                title = "FILE MISSING: " + title
+                                book =  Book(prefix, lpath, title, authors, mime, date, ContentType, ImageID, size=1048576)
+
+                        except:
+                            debug_print("prefix: ", prefix, "lpath: ", lpath, "title: ", title, "authors: ", authors,
+                                        "mime: ", mime, "date: ", date, "ContentType: ", ContentType, "ImageID: ", ImageID)
+                            raise
+
+                    # print 'Update booklist'
+                    book.device_collections = playlist_map.get(lpath,[])  # if lpath in playlist_map else []
+
+                    if bl.add_book(book, replace_metadata=False):
+                        changed = True
+            except:  # Probably a path encoding error
+                import traceback
+                traceback.print_exc()
+            return changed
+
+        with closing(sqlite.connect(self.db_path)) as connection:
+
+            # Return bytestrings if the content cannot the decoded as unicode
+            # instead of erroring out
+            connection.text_factory = lambda x: unicode(x, "utf-8", "ignore")
+
+            self._device_db_version(connection=connection)
+
+            opts = self.settings()
+            default_query='''
+            SELECT 
+                         b.storageid AS storageid,
+                         f.name AS foldername,
+                         b.id AS id,
+                         b.folderid AS folderid,
+                         b.filename AS filename, 
+                         b.name AS name,
+                         b.ext AS ext,
+                         b.title AS title,
+                         b.author AS author,
+                         b.firstauthor AS firstauthor,
+                         b.series AS series,
+                         b.numinseries AS numinseries,
+                         b.size AS size,
+                         b.updated AS updated,
+                         f.name || '/' || b.filename AS path,
+                         bs.opentime AS opentime,
+                         b.creationtime AS creationtime
+                         FROM
+                         books_impl b JOIN folders f ON b.folderid = f.id LEFT OUTER JOIN books_settings bs ON b.id = bs.bookidselect'''
+                         'Title, Attribution, DateCreated, ContentID, MimeType, ContentType, ' \
+                    'ImageID, ReadStatus, "-1" as ___ExpirationStatus, "-1" as FavouritesIndex, "-1" as Accessibility, "1" as IsDownloaded from content where BookID is Null'
+            if self.dbversion >= 15:
+                query= ('select Title, Attribution, DateCreated, ContentID, MimeType, ContentType, '
+                    'ImageID, ReadStatus, ___ExpirationStatus, FavouritesIndex, Accessibility, IsDownloaded from content where '
+                    'BookID is Null %(previews)s %(recomendations)s and not ((___ExpirationStatus=3 or ___ExpirationStatus is Null) %(expiry)s') % dict(expiry=' and ContentType = 6)'
+                    # if opts.extra_customization[self.OPT_SHOW_EXPIRED_BOOK_RECORDS] else ')',
+                    # previews=' and Accessibility <> 6'
+                    # if opts.extra_customization[self.OPT_SHOW_PREVIEWS] == False else '',
+                    # recomendations=' and IsDownloaded in (\'true\', 1)'
+                    # if opts.extra_customization[self.OPT_SHOW_RECOMMENDATIONS] == False else '')
+            else:
+                query= default_query
+
+            try:
+                cursor.execute(query)
+            except Exception as e:
+                err = str(e)
+                if not ('___ExpirationStatus' in err or 'FavouritesIndex' in err or
+                        'Accessibility' in err or 'IsDownloaded' in err):
+                    raise
+                cursor.execute(default_query)
+
+            changed = False
+            for i, row in enumerate(cursor):
+            #  self.report_progress((i+1) / float(numrows), _('Getting list of books on device...'))
+                if not hasattr(row[3], 'startswith') or row[3].startswith("file:///usr/local/Kobo/help/"):
+                    # These are internal to the Kobo device and do not exist
+                    continue
+                path = self.path_from_contentid(row[3], row[5], row[4], oncard)
+                mime = mime_type_ext(path_to_ext(path)) if path.find('kepub') == -1 else 'application/epub+zip'
+                # debug_print("mime:", mime)
+
+                if oncard != 'carda' and oncard != 'cardb' and not row[3].startswith("file:///mnt/sd/"):
+                    changed = update_booklist(self._main_prefix, path, row[0], row[1], mime, row[2], row[5], row[6], row[7], row[4], row[8], row[9], row[10])
+                    # print "shortbook: " + path
+                elif oncard == 'carda' and row[3].startswith("file:///mnt/sd/"):
+                    changed = update_booklist(self._card_a_prefix, path, row[0], row[1], mime, row[2], row[5], row[6], row[7], row[4], row[8], row[9], row[10])
+
+                if changed:
+                    need_sync = True
+
+            cursor.close()
+
+        # Remove books that are no longer in the filesystem. Cache contains
+        # indices into the booklist if book not in filesystem, None otherwise
+        # Do the operation in reverse order so indices remain valid
+        for idx in sorted(bl_cache.itervalues(), reverse=True):
+            if idx is not None:
+                need_sync = True
+                del bl[idx]
+
+        # print "count found in cache: %d, count of files in metadata: %d, need_sync: %s" % \
+        #      (len(bl_cache), len(bl), need_sync)
+        if need_sync:  # self.count_found_in_bl != len(bl) or need_sync:
+            if oncard == 'cardb':
+                self.sync_booklists((None, None, bl))
+            elif oncard == 'carda':
+                self.sync_booklists((None, bl, None))
+            else:
+                self.sync_booklists((bl, None, None))
+
+        self.report_progress(1.0, _('Getting list of books on device...'))
+        return bl
+
 
 class POCKETBOOK626(POCKETBOOK):
 
