@@ -401,36 +401,45 @@ class POCKETBOOK(USBMS):
             opts = self.settings()
             default_query='''
             SELECT 
-                         b.storageid AS storageid,
-                         f.name AS foldername,
-                         b.id AS id,
-                         b.folderid AS folderid,
-                         b.filename AS filename, 
-                         b.name AS name,
-                         b.ext AS ext,
-                         b.title AS title,
-                         b.author AS author,
-                         b.firstauthor AS firstauthor,
-                         b.series AS series,
-                         b.numinseries AS numinseries,
-                         b.size AS size,
-                         b.updated AS updated,
-                         f.name || '/' || b.filename AS path,
-                         bs.opentime AS opentime,
-                         b.creationtime AS creationtime
-                         FROM
-                         books_impl b JOIN folders f ON b.folderid = f.id LEFT OUTER JOIN books_settings bs ON b.id = bs.bookidselect'''
-                         'Title, Attribution, DateCreated, ContentID, MimeType, ContentType, ' \
-                    'ImageID, ReadStatus, "-1" as ___ExpirationStatus, "-1" as FavouritesIndex, "-1" as Accessibility, "1" as IsDownloaded from content where BookID is Null'
-            if self.dbversion >= 15:
-                query= ('select Title, Attribution, DateCreated, ContentID, MimeType, ContentType, '
-                    'ImageID, ReadStatus, ___ExpirationStatus, FavouritesIndex, Accessibility, IsDownloaded from content where '
-                    'BookID is Null %(previews)s %(recomendations)s and not ((___ExpirationStatus=3 or ___ExpirationStatus is Null) %(expiry)s') % dict(expiry=' and ContentType = 6)'
-                    # if opts.extra_customization[self.OPT_SHOW_EXPIRED_BOOK_RECORDS] else ')',
-                    # previews=' and Accessibility <> 6'
-                    # if opts.extra_customization[self.OPT_SHOW_PREVIEWS] == False else '',
-                    # recomendations=' and IsDownloaded in (\'true\', 1)'
-                    # if opts.extra_customization[self.OPT_SHOW_RECOMMENDATIONS] == False else '')
+                 b.storageid AS storageid,
+                 f.name AS foldername,
+                 b.id AS id,
+                 b.folderid AS folderid,
+                 b.filename AS filename, 
+                 b.name AS name,
+                 b.ext AS ext,
+                 b.title AS title,
+                 b.author AS author,
+                 b.firstauthor AS firstauthor,
+                 b.series AS series,
+                 b.numinseries AS numinseries,
+                 b.size AS size,
+                 "1" AS updated,
+                 null AS opentime,
+                 "1368618807" AS creationtime
+             FROM
+             books_impl b JOIN folders f ON b.folderid = f.id LEFT OUTER JOIN books_settings bs ON b.id = bs.bookidselect'''
+            if self.dbversion >= 14:
+                query='''
+                SELECT 
+                     b.storageid AS storageid,
+                     f.name AS foldername,
+                     b.id AS id,
+                     b.folderid AS folderid,
+                     b.filename AS filename, 
+                     b.name AS name,
+                     b.ext AS ext,
+                     b.title AS title,
+                     b.author AS author,
+                     b.firstauthor AS firstauthor,
+                     b.series AS series,
+                     b.numinseries AS numinseries,
+                     b.size AS size,
+                     b.updated AS updated,
+                     bs.opentime AS opentime,
+                     b.creationtime AS creationtime
+                 FROM
+                 books_impl b JOIN folders f ON b.folderid = f.id LEFT OUTER JOIN books_settings bs ON b.id = bs.bookidselect'''
             else:
                 query= default_query
 
@@ -438,22 +447,20 @@ class POCKETBOOK(USBMS):
                 cursor.execute(query)
             except Exception as e:
                 err = str(e)
-                if not ('___ExpirationStatus' in err or 'FavouritesIndex' in err or
-                        'Accessibility' in err or 'IsDownloaded' in err):
+                #Non killing errors
+                if not ('opentime' in err or 'creationtime' in err or
+                        'updated' in err):
                     raise
                 cursor.execute(default_query)
 
             changed = False
             for i, row in enumerate(cursor):
             #  self.report_progress((i+1) / float(numrows), _('Getting list of books on device...'))
-                if not hasattr(row[3], 'startswith') or row[3].startswith("file:///usr/local/Kobo/help/"):
-                    # These are internal to the Kobo device and do not exist
-                    continue
                 path = self.path_from_contentid(row[3], row[5], row[4], oncard)
                 mime = mime_type_ext(path_to_ext(path)) if path.find('kepub') == -1 else 'application/epub+zip'
                 # debug_print("mime:", mime)
 
-                if oncard != 'carda' and oncard != 'cardb' and not row[3].startswith("file:///mnt/sd/"):
+                if oncard != 'carda' and not row[3].startswith("file:///mnt/sd/"):
                     changed = update_booklist(self._main_prefix, path, row[0], row[1], mime, row[2], row[5], row[6], row[7], row[4], row[8], row[9], row[10])
                     # print "shortbook: " + path
                 elif oncard == 'carda' and row[3].startswith("file:///mnt/sd/"):
@@ -485,6 +492,17 @@ class POCKETBOOK(USBMS):
         self.report_progress(1.0, _('Getting list of books on device...'))
         return bl
 
+    def path_from_contentid(self, filename, foldername, oncard):
+        # Return the path of a book from database information and calibre mounting infos
+
+        if oncard == 'carda':
+            foldername = re.sub("/mnt/ext\d+", self._card_a_prefix, foldername)
+            # debug_print("SD Card path:", path)
+        else:
+            foldername = re.sub("/mnt/ext\d+", self._main_prefix, foldername)
+            # debug_print("Internal memory path:", path)
+
+        return foldername + '/' + filename
 
 class POCKETBOOK626(POCKETBOOK):
 
